@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2025-01-10
+
+### Fixed
+
+- Bypass S6 overlay completely (init: false) to fix startup crash
+- Use plain bash + jq instead of bashio for config reading
+- Add CMD back to Dockerfile for non-S6 mode
+
 ## [0.1.2] - 2025-01-10
 
 ### Added

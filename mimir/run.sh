@@ -1,45 +1,48 @@
-#!/usr/bin/with-contenv bashio
-
+#!/bin/bash
 set -e
 
-# Configuration
+# Configuration file path
 CONFIG_PATH=/data/options.json
 
-# Read configuration using bashio
-LLM_PROVIDER=$(bashio::config 'llm_provider')
-LLM_API_KEY=$(bashio::config 'llm_api_key')
-LLM_MODEL=$(bashio::config 'llm_model')
-LLM_BASE_URL=$(bashio::config 'llm_base_url')
-TELEGRAM_OWNER_ID=$(bashio::config 'telegram_owner_id')
-OPERATING_MODE=$(bashio::config 'operating_mode')
-DEBUG=$(bashio::config 'debug')
+echo "=========================================="
+echo "Mímir - Intelligent Home Assistant Agent"
+echo "=========================================="
 
-# Export as environment variables
-export MIMIR_LLM_PROVIDER="${LLM_PROVIDER}"
-export MIMIR_LLM_API_KEY="${LLM_API_KEY}"
-export MIMIR_LLM_MODEL="${LLM_MODEL}"
-export MIMIR_LLM_BASE_URL="${LLM_BASE_URL}"
-export MIMIR_TELEGRAM_OWNER_ID="${TELEGRAM_OWNER_ID}"
-export MIMIR_OPERATING_MODE="${OPERATING_MODE}"
-export MIMIR_DEBUG="${DEBUG}"
-
-# Supervisor token is automatically available
-export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
+# Read configuration using jq
+if [ -f "$CONFIG_PATH" ]; then
+    export MIMIR_LLM_PROVIDER=$(jq -r '.llm_provider // "anthropic"' "$CONFIG_PATH")
+    export MIMIR_LLM_API_KEY=$(jq -r '.llm_api_key // ""' "$CONFIG_PATH")
+    export MIMIR_LLM_MODEL=$(jq -r '.llm_model // "claude-sonnet-4-20250514"' "$CONFIG_PATH")
+    export MIMIR_LLM_BASE_URL=$(jq -r '.llm_base_url // ""' "$CONFIG_PATH")
+    export MIMIR_TELEGRAM_OWNER_ID=$(jq -r '.telegram_owner_id // 0' "$CONFIG_PATH")
+    export MIMIR_OPERATING_MODE=$(jq -r '.operating_mode // "normal"' "$CONFIG_PATH")
+    export MIMIR_DEBUG=$(jq -r '.debug // false' "$CONFIG_PATH")
+    export MIMIR_YOLO_MODE_DURATION=$(jq -r '.yolo_mode_duration_minutes // 10' "$CONFIG_PATH")
+    export MIMIR_DELETIONS_PER_HOUR=$(jq -r '.deletions_per_hour // 5' "$CONFIG_PATH")
+    export MIMIR_MODIFICATIONS_PER_HOUR=$(jq -r '.modifications_per_hour // 20' "$CONFIG_PATH")
+    export MIMIR_GIT_ENABLED=$(jq -r '.git_enabled // true' "$CONFIG_PATH")
+    export MIMIR_GIT_AUTHOR_NAME=$(jq -r '.git_author_name // "Mimir"' "$CONFIG_PATH")
+    export MIMIR_GIT_AUTHOR_EMAIL=$(jq -r '.git_author_email // "mimir@asgard.local"' "$CONFIG_PATH")
+else
+    echo "Warning: Config file not found at $CONFIG_PATH"
+fi
 
 # Set log level based on debug setting
-if bashio::config.true 'debug'; then
+if [ "$MIMIR_DEBUG" = "true" ]; then
     export LOG_LEVEL="DEBUG"
-    bashio::log.info "Debug mode enabled"
+    echo "Debug mode enabled"
 else
     export LOG_LEVEL="INFO"
 fi
 
-bashio::log.info "Starting Mímir - Intelligent Home Assistant Agent"
-bashio::log.info "LLM Provider: ${LLM_PROVIDER}"
-bashio::log.info "Operating Mode: ${OPERATING_MODE}"
+echo "LLM Provider: ${MIMIR_LLM_PROVIDER}"
+echo "LLM Model: ${MIMIR_LLM_MODEL}"
+echo "Operating Mode: ${MIMIR_OPERATING_MODE}"
+echo "Telegram Owner ID: ${MIMIR_TELEGRAM_OWNER_ID}"
 
 # Create data directories
 mkdir -p /data/mimir
 
 # Run the application
+echo "Starting Python application..."
 exec python3 /app/main.py
