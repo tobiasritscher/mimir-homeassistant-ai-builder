@@ -6,7 +6,7 @@ FROM ${BUILD_FROM}
 LABEL \
     io.hass.name="Mímir" \
     io.hass.description="Intelligent Home Assistant agent with Nordic wisdom" \
-    io.hass.version="0.1.8" \
+    io.hass.version="0.1.9" \
     io.hass.type="addon" \
     io.hass.arch="amd64|aarch64|armv7"
 

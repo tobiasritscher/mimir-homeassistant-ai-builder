@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2025-01-10
+
+### Added
+
+- Home Assistant tools for LLM interaction:
+  - `get_entities` - List entities, filter by domain or search
+  - `get_entity_state` - Get detailed state of a specific entity
+  - `get_automations` - List all automations with status
+  - `call_service` - Call HA services (turn on/off, etc.)
+  - `get_services` - List available services in a domain
+  - `get_error_log` - Get HA error log
+  - `get_logbook` - Get recent entity history
+
+## [0.1.8] - 2025-01-10
+
+### Added
+
+- Token debugging to find SUPERVISOR_TOKEN source
+
 ## [0.1.7] - 2025-01-10
 
 ### Fixed
