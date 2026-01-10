@@ -1,5 +1,5 @@
 # Build argument for multi-architecture support
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.11-alpine3.18
+ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
 # Add labels
