@@ -40,11 +40,14 @@ class GitManager:
         """Check if git is enabled."""
         return self._config.enabled
 
-    async def _run_git(self, *args: str) -> tuple[str, str, int]:
+    async def _run_git(
+        self, *args: str, timeout: float = 30.0
+    ) -> tuple[str, str, int]:
         """Run a git command.
 
         Args:
             *args: Git command arguments.
+            timeout: Timeout in seconds (default 30).
 
         Returns:
             Tuple of (stdout, stderr, returncode).
@@ -58,12 +61,20 @@ class GitManager:
             stderr=asyncio.subprocess.PIPE,
         )
 
-        stdout, stderr = await process.communicate()
-        return (
-            stdout.decode("utf-8", errors="replace").strip(),
-            stderr.decode("utf-8", errors="replace").strip(),
-            process.returncode or 0,
-        )
+        try:
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=timeout
+            )
+            return (
+                stdout.decode("utf-8", errors="replace").strip(),
+                stderr.decode("utf-8", errors="replace").strip(),
+                process.returncode or 0,
+            )
+        except asyncio.TimeoutError:
+            process.kill()
+            await process.wait()
+            logger.warning("Git command timed out: %s", " ".join(cmd))
+            return ("", "Command timed out", 1)
 
     async def initialize(self) -> bool:
         """Initialize git repository if needed.
@@ -232,10 +243,35 @@ class GitManager:
         if not self._initialized:
             await self.initialize()
 
-        stdout, stderr, code = await self._run_git("show", sha, "--format=")
+        # First get diff stats to check size
+        stat_out, stat_err, stat_code = await self._run_git(
+            "show", sha, "--format=", "--stat", timeout=10.0
+        )
+
+        if stat_code != 0:
+            return f"Error: {stat_err}"
+
+        # Count files changed from stat output
+        stat_lines = [l for l in stat_out.split("\n") if l.strip()]
+
+        # If too many files or stat timed out, just return stats
+        if len(stat_lines) > 50 or "timed out" in stat_err.lower():
+            return f"Large commit - showing stats only:\n\n{stat_out}"
+
+        # Try to get full diff with timeout
+        stdout, stderr, code = await self._run_git(
+            "show", sha, "--format=", timeout=15.0
+        )
 
         if code != 0:
+            if "timed out" in stderr.lower():
+                return f"Diff too large to display. Stats:\n\n{stat_out}"
             return f"Error: {stderr}"
+
+        # If diff is very large, truncate it
+        if len(stdout) > 100000:  # 100KB limit
+            truncated = stdout[:100000]
+            return f"{truncated}\n\n... (truncated, diff too large)"
 
         return stdout
 

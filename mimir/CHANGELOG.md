@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.18] - 2025-01-10
+
+### Fixed
+
+- Fix git diff loading hanging forever
+  - Added 30-second timeout to all git subprocess commands
+  - Large diffs (initial commit with entire /config) now show stats only
+  - Diffs over 100KB are truncated with a message
+  - Timeout errors are handled gracefully with informative message
+
 ## [0.1.17] - 2025-01-10
 
 ### Fixed
