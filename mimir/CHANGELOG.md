@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.13] - 2025-01-10
+
+### Changed
+
+- Complete redesign of web UI with polished dark theme
+  - Glassmorphism-style cards with subtle borders and shadows
+  - Gradient buttons with hover effects
+  - Custom styled dropdowns and form inputs
+  - Color-coded badges for sources and message types
+  - Loading spinners and empty state indicators
+  - Modal overlays with backdrop blur
+  - Git diff viewer with syntax highlighting
+  - Smooth animations and transitions throughout
+
 ## [0.1.12] - 2025-01-10
 
 ### Added
