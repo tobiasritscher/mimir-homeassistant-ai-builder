@@ -16,6 +16,26 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
+@web.middleware
+async def request_logger_middleware(request: web.Request, handler):
+    """Log all incoming requests for debugging."""
+    logger.debug(
+        "Request: %s %s (headers: %s)",
+        request.method,
+        request.path,
+        dict(request.headers),
+    )
+    try:
+        response = await handler(request)
+        logger.debug("Response: %s %s -> %s", request.method, request.path, response.status)
+        return response
+    except web.HTTPException as e:
+        logger.debug(
+            "Response: %s %s -> %s (HTTPException)", request.method, request.path, e.status
+        )
+        raise
+
+
 def setup_routes(app: web.Application) -> None:
     """Set up all web routes.
 
