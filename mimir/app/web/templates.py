@@ -240,13 +240,16 @@ SHARED_STYLES = """
 """
 
 # Main status page with chat interface
-STATUS_HTML = """<!DOCTYPE html>
+STATUS_HTML = (
+    """<!DOCTYPE html>
 <html>
 <head>
     <title>Mimir - Home Assistant Agent</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        """ + SHARED_STYLES + """
+        """
+    + SHARED_STYLES
+    + """
         .status-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -558,15 +561,19 @@ STATUS_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+)
 
 # Audit log page
-AUDIT_HTML = """<!DOCTYPE html>
+AUDIT_HTML = (
+    """<!DOCTYPE html>
 <html>
 <head>
     <title>Audit Logs - Mimir</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        """ + SHARED_STYLES + """
+        """
+    + SHARED_STYLES
+    + """
         .filters {{
             display: flex;
             gap: 12px;
@@ -854,15 +861,19 @@ AUDIT_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+)
 
 # Git history page
-GIT_HTML = """<!DOCTYPE html>
+GIT_HTML = (
+    """<!DOCTYPE html>
 <html>
 <head>
     <title>Git History - Mimir</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        """ + SHARED_STYLES + """
+        """
+    + SHARED_STYLES
+    + """
         .status-bar {{
             display: flex;
             align-items: center;
@@ -1233,15 +1244,19 @@ GIT_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+)
 
 # Simplified chat-only page
-CHAT_HTML = """<!DOCTYPE html>
+CHAT_HTML = (
+    """<!DOCTYPE html>
 <html>
 <head>
     <title>Chat - Mimir</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        """ + SHARED_STYLES + """
+        """
+    + SHARED_STYLES
+    + """
         .chat-page {{
             display: flex;
             flex-direction: column;
@@ -1603,3 +1618,4 @@ CHAT_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+)
