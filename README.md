@@ -19,7 +19,7 @@ Mímir is an AI-powered agent that interfaces with Home Assistant to manage auto
 
 1. Add this repository to your Home Assistant Add-on Store:
    ```
-   https://github.com/yourusername/mimir
+   https://github.com/tobiasritscher/mimir-homeassistant-ai-builder/
    ```
 2. Install the Mímir add-on
 3. Configure your LLM API key and Telegram settings
