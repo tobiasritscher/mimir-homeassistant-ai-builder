@@ -476,6 +476,10 @@ STATUS_HTML = """<!DOCTYPE html>
         </div>
 
         <div class="nav-links">
+            <a href="/chat" class="nav-link">
+                <span class="nav-icon">&#128172;</span>
+                Chat Only
+            </a>
             <a href="/audit" class="nav-link">
                 <span class="nav-icon">&#128220;</span>
                 Audit Logs
@@ -1225,6 +1229,376 @@ GIT_HTML = """<!DOCTYPE html>
 
         // Close modal on escape
         document.addEventListener('keydown', e => {{ if (e.key === 'Escape') closeModal(); }});
+    </script>
+</body>
+</html>
+"""
+
+# Simplified chat-only page
+CHAT_HTML = """<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat - Mimir</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        """ + SHARED_STYLES + """
+        .chat-page {{
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        .chat-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }}
+        .chat-header h1 {{
+            color: #818cf8;
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }}
+        .header-actions {{
+            display: flex;
+            gap: 8px;
+        }}
+        .quick-actions {{
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }}
+        .quick-btn {{
+            padding: 8px 14px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            color: #a5b4fc;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .quick-btn:hover {{
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }}
+        .chat-main {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            min-height: 0;
+        }}
+        .chat-messages {{
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }}
+        .message {{
+            margin: 12px 0;
+            padding: 14px 18px;
+            border-radius: 16px;
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            line-height: 1.5;
+        }}
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+        .message.user {{
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }}
+        .message.assistant {{
+            background: rgba(51, 65, 85, 0.9);
+            border-bottom-left-radius: 4px;
+        }}
+        .message pre {{
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin: 10px 0;
+            font-size: 13px;
+        }}
+        .message code {{
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }}
+        .typing-indicator {{
+            display: none;
+            padding: 14px 18px;
+            background: rgba(51, 65, 85, 0.9);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            max-width: 80px;
+            margin: 12px 0;
+        }}
+        .typing-indicator.visible {{
+            display: block;
+        }}
+        .typing-dot {{
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #6366f1;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1s infinite;
+        }}
+        .typing-dot:nth-child(2) {{ animation-delay: 0.2s; }}
+        .typing-dot:nth-child(3) {{ animation-delay: 0.4s; }}
+        @keyframes typing {{
+            0%, 100% {{ opacity: 0.3; }}
+            50% {{ opacity: 1; }}
+        }}
+        .chat-input-area {{
+            padding: 16px 20px;
+            background: rgba(15, 23, 42, 0.6);
+            border-top: 1px solid rgba(99, 102, 241, 0.1);
+        }}
+        .chat-input-container {{
+            display: flex;
+            gap: 12px;
+        }}
+        .chat-input {{
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            font-size: 15px;
+            resize: none;
+            max-height: 120px;
+        }}
+        .chat-input:focus {{
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }}
+        .chat-send {{
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+        .chat-send:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }}
+        .chat-send:disabled {{
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }}
+        .welcome-message {{
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }}
+        .welcome-message h2 {{
+            color: #818cf8;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }}
+        .welcome-message p {{
+            margin-bottom: 20px;
+        }}
+        .suggestions {{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }}
+        .suggestion {{
+            padding: 10px 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 20px;
+            color: #a5b4fc;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        .suggestion:hover {{
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.4);
+        }}
+    </style>
+</head>
+<body>
+    <div class="chat-page">
+        <div class="chat-header">
+            <h1>&#129704; Mimir</h1>
+            <div class="header-actions">
+                <a href="/" class="btn btn-secondary">&#128202; Dashboard</a>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="sendQuickAction('Analyze recent Home Assistant error logs')">
+                &#128270; Analyze Logs
+            </button>
+            <button class="quick-btn" onclick="sendQuickAction('What entities have changed state in the last hour?')">
+                &#128200; Recent Changes
+            </button>
+            <button class="quick-btn" onclick="sendQuickAction('Show me a summary of my automations')">
+                &#9881; Automations
+            </button>
+            <button class="quick-btn" onclick="sendQuickAction('What devices are currently unavailable?')">
+                &#128268; Unavailable
+            </button>
+        </div>
+
+        <div class="chat-main">
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message" id="welcomeMessage">
+                    <h2>Welcome to Mimir</h2>
+                    <p>Your intelligent Home Assistant assistant. Ask me anything about your smart home!</p>
+                    <div class="suggestions">
+                        <span class="suggestion" onclick="sendQuickAction('Turn off all lights')">Turn off all lights</span>
+                        <span class="suggestion" onclick="sendQuickAction('What is the temperature in the living room?')">Check temperature</span>
+                        <span class="suggestion" onclick="sendQuickAction('Create an automation to turn on lights at sunset')">Create automation</span>
+                    </div>
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+            <div class="chat-input-area">
+                <div class="chat-input-container">
+                    <textarea class="chat-input" id="chatInput" rows="1"
+                           placeholder="Ask Mimir something..."
+                           onkeydown="handleKeyDown(event)"></textarea>
+                    <button class="chat-send" id="sendBtn" onclick="sendMessage()">
+                        Send &#10148;
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatMessage(text) {{
+            text = text.replace(/```([\\s\\S]*?)```/g, '<pre>$1</pre>');
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+            text = text.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
+            text = text.replace(/\\n/g, '<br>');
+            return text;
+        }}
+
+        function addMessage(role, content) {{
+            const welcome = document.getElementById('welcomeMessage');
+            if (welcome) welcome.style.display = 'none';
+
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message ' + role;
+            div.innerHTML = formatMessage(content);
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }}
+
+        function setTyping(visible) {{
+            document.getElementById('typingIndicator').className = 'typing-indicator' + (visible ? ' visible' : '');
+        }}
+
+        function handleKeyDown(event) {{
+            if (event.key === 'Enter' && !event.shiftKey) {{
+                event.preventDefault();
+                sendMessage();
+            }}
+        }}
+
+        async function sendMessage(customMessage) {{
+            const input = document.getElementById('chatInput');
+            const btn = document.getElementById('sendBtn');
+            const message = customMessage || input.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            if (!customMessage) input.value = '';
+            btn.disabled = true;
+            setTyping(true);
+
+            try {{
+                const response = await fetch('/api/chat', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify({{ message: message }})
+                }});
+                const data = await response.json();
+                addMessage('assistant', data.error ? 'Error: ' + data.error : data.response);
+            }} catch (error) {{
+                addMessage('assistant', 'Error: Failed to connect to server');
+            }}
+
+            btn.disabled = false;
+            setTyping(false);
+            input.focus();
+        }}
+
+        function sendQuickAction(message) {{
+            sendMessage(message);
+        }}
+
+        async function loadHistory() {{
+            try {{
+                const response = await fetch('/api/chat/history');
+                const data = await response.json();
+                if (data.history && data.history.length > 0) {{
+                    document.getElementById('welcomeMessage').style.display = 'none';
+                    data.history.forEach(msg => addMessage(msg.role, msg.content));
+                }}
+            }} catch (error) {{
+                console.error('Failed to load history:', error);
+            }}
+        }}
+
+        // Auto-resize textarea
+        const textarea = document.getElementById('chatInput');
+        textarea.addEventListener('input', function() {{
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        }});
+
+        loadHistory();
     </script>
 </body>
 </html>

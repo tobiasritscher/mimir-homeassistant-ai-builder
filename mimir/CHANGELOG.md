@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.15] - 2025-01-10
+
+### Added
+
+- **Ingress support**: "Open Web UI" button now works in Home Assistant add-on page
+- **Sidebar integration**: Mímir appears in HA sidebar with `mdi:head-lightbulb` icon
+- **Chat-only page**: Simplified chat interface at `/chat` with quick actions
+  - Analyze Logs, Recent Changes, Automations, Unavailable Devices buttons
+  - Full-height chat interface optimized for focused conversations
+  - Welcome screen with suggestion prompts
+- Navigation links between Dashboard and Chat views
+
+### Changed
+
+- Dashboard now includes link to chat-only view
+
 ## [0.1.14] - 2025-01-10
 
 ### Fixed

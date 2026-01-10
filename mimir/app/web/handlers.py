@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from aiohttp import web
 
 from ..utils.logging import get_logger
-from .templates import AUDIT_HTML, GIT_HTML, STATUS_HTML
+from .templates import AUDIT_HTML, CHAT_HTML, GIT_HTML, STATUS_HTML
 
 if TYPE_CHECKING:
     from ..db.repository import AuditRepository
@@ -24,6 +24,7 @@ def setup_routes(app: web.Application) -> None:
     """
     # Main pages
     app.router.add_get("/", handle_status)
+    app.router.add_get("/chat", handle_chat_page)
     app.router.add_get("/health", handle_health)
     app.router.add_get("/audit", handle_audit_page)
     app.router.add_get("/git", handle_git_page)
@@ -96,6 +97,11 @@ async def handle_audit_page(_request: web.Request) -> web.Response:
 async def handle_git_page(_request: web.Request) -> web.Response:
     """Handle GET /git - Git history page."""
     return web.Response(text=GIT_HTML, content_type="text/html")
+
+
+async def handle_chat_page(_request: web.Request) -> web.Response:
+    """Handle GET /chat - Simplified chat-only page."""
+    return web.Response(text=CHAT_HTML, content_type="text/html")
 
 
 # ============== Chat API ==============

@@ -1,5 +1,5 @@
 name: Mimir
-version: "0.1.14"
+version: "0.1.15"
 slug: mimir
 description: Intelligent Home Assistant agent with Nordic wisdom
 url: https://github.com/tobiasritscher/mimir-homeassistant-ai-builder
@@ -13,6 +13,12 @@ init: false
 hassio_api: true
 homeassistant_api: true
 auth_api: true
+ingress: true
+ingress_port: 5000
+ingress_entry: /
+panel_icon: mdi:head-lightbulb
+panel_title: Mímir
+panel_admin: false
 ports:
   5000/tcp: 5000
 ports_description:
