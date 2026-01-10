@@ -247,12 +247,14 @@ class MimirAgent:
 
     async def _handle_health_request(self, _request: web.Request) -> web.Response:
         """Handle health check request."""
-        return web.json_response({
-            "status": "ok",
-            "version": self.VERSION,
-            "ha_connected": self._ha_connected,
-            "ws_connected": self._ws_connected,
-        })
+        return web.json_response(
+            {
+                "status": "ok",
+                "version": self.VERSION,
+                "ha_connected": self._ha_connected,
+                "ws_connected": self._ws_connected,
+            }
+        )
 
     async def _start_web_server(self) -> None:
         """Start the web server."""
@@ -279,7 +281,12 @@ class MimirAgent:
             if await self._check_ha_connection():
                 return True
             if attempt < max_retries - 1:
-                logger.info("Retrying HA connection in %.1f seconds... (%d/%d)", delay, attempt + 1, max_retries)
+                logger.info(
+                    "Retrying HA connection in %.1f seconds... (%d/%d)",
+                    delay,
+                    attempt + 1,
+                    max_retries,
+                )
                 await asyncio.sleep(delay)
         return False
 

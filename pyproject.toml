@@ -87,6 +87,7 @@ no_implicit_optional = true
 module = [
     "duckduckgo_search.*",
     "ruamel.*",
+    "yaml.*",
 ]
 ignore_missing_imports = true
 

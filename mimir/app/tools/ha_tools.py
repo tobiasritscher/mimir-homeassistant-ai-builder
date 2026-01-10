@@ -67,7 +67,8 @@ class GetEntitiesTool(BaseTool):
             # Filter by search term
             if search:
                 states = [
-                    s for s in states
+                    s
+                    for s in states
                     if search in s.entity_id.lower()
                     or search in (s.attributes.get("friendly_name", "") or "").lower()
                 ]
@@ -213,7 +214,10 @@ class CallServiceTool(BaseTool):
 
             if result:
                 states = [f"{s.entity_id}: {s.state}" for s in result]
-                return f"Service {domain}.{service} called successfully. Affected entities:\n" + "\n".join(states)
+                return (
+                    f"Service {domain}.{service} called successfully. Affected entities:\n"
+                    + "\n".join(states)
+                )
             else:
                 return f"Service {domain}.{service} called successfully."
 
@@ -264,7 +268,8 @@ class GetAutomationsTool(BaseTool):
             # Filter by search term
             if search:
                 automations = [
-                    a for a in automations
+                    a
+                    for a in automations
                     if search in a.entity_id.lower()
                     or search in (a.attributes.get("friendly_name", "") or "").lower()
                 ]
@@ -390,7 +395,9 @@ class GetServicesTool(BaseTool):
                     # Show all services for specific domain or small domains
                     results.append(f"\n{domain}:")
                     for svc in domain_services:
-                        desc = svc.description[:80] + "..." if len(svc.description) > 80 else svc.description
+                        desc = svc.description or ""
+                        if len(desc) > 80:
+                            desc = desc[:80] + "..."
                         results.append(f"  - {svc.name}: {desc}")
                 else:
                     # Just show count for large domains
@@ -536,7 +543,9 @@ class GetAutomationConfigTool(BaseTool):
             config = await self._ha_api.get_automation_config(internal_id)
 
             # Format as YAML for readability
-            yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            yaml_output = yaml.dump(
+                config, default_flow_style=False, allow_unicode=True, sort_keys=False
+            )
 
             return f"Automation configuration for '{entity_id}' (internal ID: {internal_id}):\n\n```yaml\n{yaml_output}```"
 
@@ -631,7 +640,9 @@ class CreateAutomationTool(BaseTool):
             # Reload automations to apply changes
             await self._ha_api.call_service("automation", "reload")
 
-            yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            yaml_output = yaml.dump(
+                config, default_flow_style=False, allow_unicode=True, sort_keys=False
+            )
             return f"Automation '{alias}' (automation.{automation_id}) created successfully!\n\n```yaml\n{yaml_output}```"
 
         except Exception as e:
@@ -705,7 +716,9 @@ class UpdateAutomationTool(BaseTool):
             # Reload automations to apply changes
             await self._ha_api.call_service("automation", "reload")
 
-            yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            yaml_output = yaml.dump(
+                config, default_flow_style=False, allow_unicode=True, sort_keys=False
+            )
             return f"Automation '{entity_id}' updated successfully!\n\n```yaml\n{yaml_output}```"
 
         except Exception as e:
