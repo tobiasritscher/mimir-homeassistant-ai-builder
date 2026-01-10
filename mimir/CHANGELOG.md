@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-01-10
+
+### Fixed
+
+- Remove restrictive AppArmor profile that blocked S6 overlay init
+- Remove CMD override to let S6 overlay handle entrypoint
+
 ## [0.1.0] - 2025-01-10
 
 ### Added
