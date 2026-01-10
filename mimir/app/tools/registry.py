@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import time
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING, Any
 
 from ..utils.logging import get_logger
 
@@ -11,6 +13,12 @@ if TYPE_CHECKING:
     from .base import BaseTool
 
 logger = get_logger(__name__)
+
+# Type for execution callback: (tool_name, params, result, duration_ms, success, error) -> None
+ExecutionCallback = Callable[
+    [str, dict[str, Any], str | None, int, bool, str | None],
+    Awaitable[None],
+]
 
 
 class ToolNotFoundError(Exception):
@@ -30,6 +38,19 @@ class ToolRegistry:
     def __init__(self) -> None:
         """Initialize an empty tool registry."""
         self._tools: dict[str, BaseTool] = {}
+        self._on_execute: ExecutionCallback | None = None
+
+    def set_execution_callback(self, callback: ExecutionCallback | None) -> None:
+        """Set a callback to be called after each tool execution.
+
+        The callback receives: (tool_name, params, result, duration_ms, success, error).
+
+        Args:
+            callback: The callback function, or None to remove.
+        """
+        self._on_execute = callback
+        if callback:
+            logger.debug("Tool execution callback registered")
 
     def register(self, tool: BaseTool) -> None:
         """Register a tool.
@@ -114,13 +135,39 @@ class ToolRegistry:
         tool = self.get(name)
         logger.info("Executing tool: %s", name)
 
+        start_time = time.monotonic()
+        result: str | None = None
+        error_msg: str | None = None
+        success = False
+
         try:
             result = await tool.validate_and_execute(**kwargs)
+            success = not result.startswith("Error:") if result else True
             logger.debug("Tool %s returned: %s...", name, result[:100] if result else "")
-            return result
         except Exception as e:
             logger.exception("Tool %s failed: %s", name, e)
-            return f"Error executing {name}: {e}"
+            error_msg = str(e)
+            result = f"Error executing {name}: {e}"
+            success = False
+
+        # Calculate duration
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+
+        # Call execution callback if registered
+        if self._on_execute:
+            try:
+                await self._on_execute(
+                    name,
+                    dict(kwargs),
+                    result,
+                    duration_ms,
+                    success,
+                    error_msg,
+                )
+            except Exception as cb_err:
+                logger.warning("Execution callback failed: %s", cb_err)
+
+        return result or f"Error executing {name}: No result returned"
 
     def __len__(self) -> int:
         """Return the number of registered tools."""

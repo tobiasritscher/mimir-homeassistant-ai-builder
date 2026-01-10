@@ -8,12 +8,15 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from aiohttp import web
 
 from .config import load_config
 from .conversation.manager import ConversationManager
+from .db import AuditRepository, Database
+from .git import GitManager
+from .git.manager import GitConfig
 from .ha.api import HomeAssistantAPI
 from .ha.websocket import HomeAssistantWebSocket
 from .llm.factory import create_provider
@@ -34,112 +37,18 @@ from .tools.ha_tools import (
 from .tools.registry import ToolRegistry
 from .tools.web_search import HACSSearchTool, HomeAssistantDocsSearchTool, WebSearchTool
 from .utils.logging import get_logger, setup_logging
+from .web import setup_routes
 
 if TYPE_CHECKING:
     from .ha.types import TelegramMessage
 
 logger = get_logger(__name__)
 
-# Web interface HTML template
-STATUS_HTML = """<!DOCTYPE html>
-<html>
-<head>
-    <title>Mímir - Home Assistant Agent</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }}
-        .container {{
-            max-width: 800px;
-            margin: 0 auto;
-        }}
-        h1 {{
-            color: #6366f1;
-            border-bottom: 2px solid #6366f1;
-            padding-bottom: 10px;
-        }}
-        .status-card {{
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-        }}
-        .status-item {{
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }}
-        .status-item:last-child {{
-            border-bottom: none;
-        }}
-        .status-ok {{ color: #22c55e; }}
-        .status-error {{ color: #ef4444; }}
-        .status-pending {{ color: #f59e0b; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Mímir</h1>
-        <p>Intelligent Home Assistant Agent with Nordic Wisdom</p>
-
-        <div class="status-card">
-            <h2>Status</h2>
-            <div class="status-item">
-                <span>Version</span>
-                <span>{version}</span>
-            </div>
-            <div class="status-item">
-                <span>LLM Provider</span>
-                <span>{llm_provider}</span>
-            </div>
-            <div class="status-item">
-                <span>LLM Model</span>
-                <span>{llm_model}</span>
-            </div>
-            <div class="status-item">
-                <span>Operating Mode</span>
-                <span>{operating_mode}</span>
-            </div>
-            <div class="status-item">
-                <span>Home Assistant</span>
-                <span class="{ha_status_class}">{ha_status}</span>
-            </div>
-            <div class="status-item">
-                <span>WebSocket</span>
-                <span class="{ws_status_class}">{ws_status}</span>
-            </div>
-            <div class="status-item">
-                <span>Telegram Owner ID</span>
-                <span>{telegram_owner_id}</span>
-            </div>
-            <div class="status-item">
-                <span>Registered Tools</span>
-                <span>{tool_count}</span>
-            </div>
-        </div>
-
-        <div class="status-card">
-            <h2>Usage</h2>
-            <p>Send a message to Mímir via Telegram to get started.</p>
-            <p>Make sure your Telegram bot is configured in Home Assistant and your user ID matches the configured owner ID.</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
-
 
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.11"
+    VERSION = "0.1.12"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -153,6 +62,13 @@ class MimirAgent:
         self._tool_registry = ToolRegistry()
         self._telegram_handler: TelegramHandler | None = None
         self._conversation_manager: ConversationManager | None = None
+
+        # Database and audit
+        self._database: Database | None = None
+        self._audit: AuditRepository | None = None
+
+        # Git manager
+        self._git: GitManager | None = None
 
         # Status tracking
         self._ha_connected = False
@@ -205,9 +121,19 @@ class MimirAgent:
         if not message.text:
             return None
 
+        # Set message context for audit logging
+        self._conversation_manager.set_message_context(
+            source="telegram",
+            user_id=str(message.user_id),
+        )
+
         # Process the message
         try:
-            response = await self._conversation_manager.process_message(message.text)
+            response = await self._conversation_manager.process_message(
+                message.text,
+                source="telegram",
+                user_id=str(message.user_id),
+            )
             return response
         except Exception as e:
             logger.exception("Error processing message: %s", e)
@@ -229,38 +155,64 @@ class MimirAgent:
             self._ha_connected = False
             return False
 
-    async def _handle_status_request(self, _request: web.Request) -> web.Response:
-        """Handle web status page request."""
-        html = STATUS_HTML.format(
-            version=self.VERSION,
-            llm_provider=self._llm.name,
-            llm_model=self._llm.model,
-            operating_mode=self._config.operating_mode.value,
-            ha_status="Connected" if self._ha_connected else "Disconnected",
-            ha_status_class="status-ok" if self._ha_connected else "status-error",
-            ws_status="Connected" if self._ws_connected else "Disconnected",
-            ws_status_class="status-ok" if self._ws_connected else "status-error",
-            telegram_owner_id=self._config.telegram_owner_id,
-            tool_count=len(self._tool_registry),
-        )
-        return web.Response(text=html, content_type="text/html")
+    async def _init_database(self) -> None:
+        """Initialize database and audit repository."""
+        db_path = "/data/mimir.db"
+        self._database = Database(db_path)
+        await self._database.initialize()
+        self._audit = AuditRepository(self._database)
+        logger.info("Database initialized at %s", db_path)
 
-    async def _handle_health_request(self, _request: web.Request) -> web.Response:
-        """Handle health check request."""
-        return web.json_response(
-            {
-                "status": "ok",
-                "version": self.VERSION,
-                "ha_connected": self._ha_connected,
-                "ws_connected": self._ws_connected,
-            }
+    async def _init_git(self) -> None:
+        """Initialize git manager."""
+        git_config = GitConfig(
+            repo_path="/config",
+            author_name="Mimir",
+            author_email="mimir@asgard.local",
+            enabled=True,
         )
+        self._git = GitManager(git_config)
+        if await self._git.initialize():
+            logger.info("Git repository initialized")
+        else:
+            logger.warning("Git initialization failed or disabled")
+
+    def _create_tool_execution_callback(
+        self,
+    ) -> Any:
+        """Create a callback for logging tool executions."""
+
+        async def callback(
+            tool_name: str,
+            parameters: dict[str, Any],
+            result: str | None,
+            duration_ms: int,
+            success: bool,
+            error: str | None,
+        ) -> None:
+            if self._audit:
+                await self._audit.log_tool_execution(
+                    tool_name=tool_name,
+                    parameters=parameters,
+                    result=result,
+                    duration_ms=duration_ms,
+                    success=success,
+                    error_message=error,
+                )
+
+        return callback
 
     async def _start_web_server(self) -> None:
         """Start the web server."""
         self._web_app = web.Application()
-        self._web_app.router.add_get("/", self._handle_status_request)
-        self._web_app.router.add_get("/health", self._handle_health_request)
+
+        # Store references for handlers
+        self._web_app["agent"] = self
+        self._web_app["audit"] = self._audit
+        self._web_app["git"] = self._git
+
+        # Setup all routes
+        setup_routes(self._web_app)
 
         self._web_runner = web.AppRunner(self._web_app)
         await self._web_runner.setup()
@@ -296,6 +248,18 @@ class MimirAgent:
         logger.info("LLM Provider: %s (%s)", self._llm.name, self._llm.model)
         logger.info("Operating Mode: %s", self._config.operating_mode.value)
 
+        # Initialize database and audit
+        try:
+            await self._init_database()
+        except Exception as e:
+            logger.warning("Failed to initialize database: %s", e)
+
+        # Initialize git manager
+        try:
+            await self._init_git()
+        except Exception as e:
+            logger.warning("Failed to initialize git: %s", e)
+
         # Start web server first (so user can see status)
         await self._start_web_server()
 
@@ -308,12 +272,16 @@ class MimirAgent:
             await self._stop_web_server()
             return
 
-        # Initialize conversation manager
+        # Initialize conversation manager with audit
         self._conversation_manager = ConversationManager(
             llm=self._llm,
             tool_registry=self._tool_registry,
             operating_mode=self._config.operating_mode,
+            audit_repository=self._audit,
         )
+
+        # Set up tool execution callback for audit logging
+        self._tool_registry.set_execution_callback(self._create_tool_execution_callback())
 
         # Initialize Telegram handler
         self._telegram_handler = TelegramHandler(
@@ -349,6 +317,10 @@ class MimirAgent:
             await self._ha_ws.stop()
             await self._ha_api.close()
             await self._llm.close()
+
+            # Close database
+            if self._database:
+                await self._database.close()
 
             # Cancel WebSocket task
             ws_task.cancel()

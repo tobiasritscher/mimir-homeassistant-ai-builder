@@ -6,13 +6,14 @@ Handles message history, tool execution, and response generation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..llm.types import Message, ToolCall
 from ..utils.logging import get_logger
 
 if TYPE_CHECKING:
     from ..config import OperatingMode
+    from ..db.repository import AuditRepository
     from ..llm.base import LLMProvider
     from ..tools.registry import ToolRegistry
 
@@ -53,6 +54,25 @@ You cannot:
 - Manage users
 - Handle SSL/certificate management
 - Install add-ons or integrations directly (you can only recommend)
+
+## Automation Editing Guidelines
+When modifying automations, scripts, or scenes:
+1. **Preserve existing logic**: Only change what the user explicitly asks for. Never rewrite entire automations.
+2. **Show changes first**: Always display a diff of proposed changes before applying them.
+3. **Explain impact**: Briefly describe what the change will affect.
+4. **Minimal edits**: Make surgical changes, not wholesale replacements.
+5. **Ask for confirmation**: For significant changes, ask "Shall I apply these changes?"
+
+Example approach:
+User: "Make the motion light turn off after 10 minutes instead of 5"
+You: "I'll update the delay in your motion automation. Here's what changes:
+```diff
+- delay: '00:05:00'
++ delay: '00:10:00'
+```
+Everything else stays the same. Shall I apply this?"
+
+**Never** remove or modify logic the user didn't ask about, even if you think it could be "improved".
 
 ## Operating Mode
 Your current operating mode affects what actions require confirmation:
@@ -96,6 +116,7 @@ class ConversationManager:
         llm: LLMProvider,
         tool_registry: ToolRegistry,
         operating_mode: OperatingMode,
+        audit_repository: AuditRepository | None = None,
         max_history: int = 50,
         max_tool_iterations: int = 10,
     ) -> None:
@@ -105,15 +126,36 @@ class ConversationManager:
             llm: The LLM provider to use.
             tool_registry: Registry of available tools.
             operating_mode: Current operating mode.
+            audit_repository: Optional repository for audit logging.
             max_history: Maximum number of messages to keep in history.
             max_tool_iterations: Maximum tool call iterations per turn.
         """
         self._llm = llm
         self._tool_registry = tool_registry
         self._operating_mode = operating_mode
+        self._audit = audit_repository
         self._max_history = max_history
         self._max_tool_iterations = max_tool_iterations
         self._messages: list[Message] = []
+
+        # Current message context for audit logging
+        self._current_source: str = "unknown"
+        self._current_user_id: str | None = None
+        self._current_audit_log_id: int | None = None
+
+    def set_message_context(
+        self,
+        source: str,
+        user_id: str | None = None,
+    ) -> None:
+        """Set the context for the current message (for audit logging).
+
+        Args:
+            source: Source of the message ('telegram', 'web').
+            user_id: Optional user identifier.
+        """
+        self._current_source = source
+        self._current_user_id = user_id
 
     @property
     def operating_mode(self) -> OperatingMode:
@@ -182,7 +224,12 @@ class ConversationManager:
 
         return results
 
-    async def process_message(self, user_message: str) -> str:
+    async def process_message(
+        self,
+        user_message: str,
+        source: str | None = None,
+        user_id: str | None = None,
+    ) -> str:
         """Process a user message and generate a response.
 
         This method:
@@ -193,15 +240,35 @@ class ConversationManager:
 
         Args:
             user_message: The user's message.
+            source: Optional source override ('telegram', 'web').
+            user_id: Optional user ID override.
 
         Returns:
             The assistant's response text.
         """
+        # Set message context if provided
+        if source:
+            self._current_source = source
+        if user_id:
+            self._current_user_id = user_id
+
         # Add user message to history
         self._messages.append(Message.user(user_message))
         self._trim_history()
 
         logger.info("Processing message: %s...", user_message[:50])
+
+        # Log user message to audit
+        if self._audit:
+            try:
+                self._current_audit_log_id = await self._audit.log_message(
+                    source=self._current_source,
+                    message_type="user",
+                    content=user_message,
+                    user_id=self._current_user_id,
+                )
+            except Exception as e:
+                logger.warning("Failed to log user message: %s", e)
 
         # Get available tools
         tools = self._tool_registry.get_llm_tools()
@@ -244,18 +311,71 @@ class ConversationManager:
             # No tool calls - we have a final response
             if response.content:
                 self._messages.append(Message.assistant(content=response.content))
+                await self._log_assistant_response(response.content)
                 return response.content
 
             # Edge case: no content and no tool calls
             logger.warning("LLM returned empty response")
-            return "I apologize, but I couldn't generate a response. Please try again."
+            fallback = "I apologize, but I couldn't generate a response. Please try again."
+            await self._log_assistant_response(fallback)
+            return fallback
 
         # Exceeded max iterations
         logger.warning("Exceeded max tool iterations (%d)", self._max_tool_iterations)
-        return (
+        limit_response = (
             "I've been working on this for a while and hit a limit. "
             "Here's what I found so far - let me know if you need me to continue."
         )
+        await self._log_assistant_response(limit_response)
+        return limit_response
+
+    async def _log_assistant_response(self, content: str) -> None:
+        """Log an assistant response to the audit log.
+
+        Args:
+            content: The response content.
+        """
+        if not self._audit:
+            return
+
+        try:
+            await self._audit.log_message(
+                source=self._current_source,
+                message_type="assistant",
+                content=content,
+                user_id=self._current_user_id,
+            )
+        except Exception as e:
+            logger.warning("Failed to log assistant response: %s", e)
+
+    def get_history(self) -> list[dict[str, Any]]:
+        """Get conversation history in a serializable format.
+
+        Returns:
+            List of message dictionaries with 'role' and 'content'.
+        """
+        history = []
+        for msg in self._messages:
+            # Skip tool results - they're internal
+            if msg.role.value == "user" or (msg.role.value == "assistant" and not msg.tool_calls):
+                content = ""
+                if isinstance(msg.content, str):
+                    content = msg.content
+                elif isinstance(msg.content, list):
+                    # Extract text content from content blocks
+                    for block in msg.content:
+                        if hasattr(block, "text") and block.text:
+                            content += block.text
+
+                if content:
+                    history.append(
+                        {
+                            "role": msg.role.value,
+                            "content": content,
+                        }
+                    )
+
+        return history
 
     async def get_context_summary(self) -> str:
         """Get a summary of the current conversation context.
