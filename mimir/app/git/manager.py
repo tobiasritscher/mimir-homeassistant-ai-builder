@@ -165,7 +165,7 @@ class GitManager:
         stdout, _stderr, code = await self._run_git(
             "log",
             "-1",
-            "--format=%H|%s|%an|%ai",
+            "--format=%H|%s|%an|%aI",
         )
 
         if code != 0 or not stdout:
@@ -197,7 +197,7 @@ class GitManager:
         stdout, _stderr, code = await self._run_git(
             "log",
             f"-{limit}",
-            "--format=%H|%s|%an|%ai",
+            "--format=%H|%s|%an|%aI",
         )
 
         if code != 0 or not stdout:
@@ -229,6 +229,9 @@ class GitManager:
         Returns:
             Diff string.
         """
+        if not self._initialized:
+            await self.initialize()
+
         stdout, stderr, code = await self._run_git("show", sha, "--format=")
 
         if code != 0:

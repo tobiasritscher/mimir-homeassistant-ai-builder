@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.17] - 2025-01-10
+
+### Fixed
+
+- Fix "Invalid Date" on Git history page
+  - Changed git date format from `%ai` to `%aI` (strict ISO 8601)
+  - JavaScript can now parse dates correctly
+- Fix diff loading hanging forever
+  - Added initialization check to `get_diff()` method
+
 ## [0.1.16] - 2025-01-10
 
 ### Fixed
