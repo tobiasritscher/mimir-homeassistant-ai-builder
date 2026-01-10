@@ -1,0 +1,40 @@
+configuration:
+  llm_provider:
+    name: LLM Provider
+    description: Select your preferred AI model provider
+  llm_api_key:
+    name: API Key
+    description: Your API key for the selected LLM provider
+  llm_model:
+    name: Model
+    description: The specific model to use (leave empty for default)
+  llm_base_url:
+    name: Base URL
+    description: Custom API endpoint (for Ollama, vLLM, or Azure)
+  telegram_owner_id:
+    name: Telegram Owner ID
+    description: Your Telegram user ID (only this user can control Mímir)
+  operating_mode:
+    name: Operating Mode
+    description: "chat: read-only, normal: with confirmations, yolo: auto-approve all"
+  yolo_mode_duration_minutes:
+    name: YOLO Mode Duration
+    description: How long YOLO mode stays active (in minutes)
+  deletions_per_hour:
+    name: Deletions per Hour
+    description: Maximum number of deletions allowed per hour
+  modifications_per_hour:
+    name: Modifications per Hour
+    description: Maximum number of modifications allowed per hour
+  git_enabled:
+    name: Enable Git
+    description: Automatically commit configuration changes to Git
+  git_author_name:
+    name: Git Author Name
+    description: Name used for Git commits
+  git_author_email:
+    name: Git Author Email
+    description: Email used for Git commits
+  debug:
+    name: Debug Mode
+    description: Enable verbose logging for troubleshooting

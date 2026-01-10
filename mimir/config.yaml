@@ -1,0 +1,104 @@
+name: "Mímir"
+version: "0.1.0"
+slug: mimir
+description: "Intelligent Home Assistant agent with Nordic wisdom - manages automations, analyzes logs, and provides technical guidance"
+url: "https://github.com/yourusername/mimir"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+
+startup: application
+boot: auto
+init: false
+
+# API Access
+hassio_api: true
+homeassistant_api: true
+auth_api: true
+
+# Network
+ports:
+  5000/tcp: 5000
+ports_description:
+  5000/tcp: "Web panel interface"
+
+# File system access
+map:
+  - type: homeassistant_config
+    read_only: false
+  - type: share
+    read_only: false
+  - type: ssl
+    read_only: true
+
+# Default options
+options:
+  llm_provider: "anthropic"
+  llm_model: "claude-sonnet-4-20250514"
+  telegram_owner_id: 0
+  operating_mode: "normal"
+  yolo_mode_duration_minutes: 10
+  deletions_per_hour: 5
+  modifications_per_hour: 20
+  git_enabled: true
+  git_author_name: "Mímir"
+  git_author_email: "mimir@asgard.local"
+  debug: false
+
+# Configuration schema
+schema:
+  llm_provider:
+    required: true
+    type: select
+    options:
+      - anthropic
+      - openai
+      - gemini
+      - azure
+      - ollama
+      - vllm
+  llm_api_key:
+    required: true
+    type: password
+  llm_model:
+    required: false
+    type: str
+  llm_base_url:
+    required: false
+    type: str
+  telegram_owner_id:
+    required: true
+    type: int
+  operating_mode:
+    required: false
+    type: select
+    options:
+      - chat
+      - normal
+      - yolo
+  yolo_mode_duration_minutes:
+    required: false
+    type: int
+  deletions_per_hour:
+    required: false
+    type: int
+  modifications_per_hour:
+    required: false
+    type: int
+  git_enabled:
+    required: false
+    type: bool
+  git_author_name:
+    required: false
+    type: str
+  git_author_email:
+    required: false
+    type: str
+  debug:
+    required: false
+    type: bool
+
+# Panel integration
+panel_icon: "mdi:head-lightbulb"
+panel_title: "Mímir"
