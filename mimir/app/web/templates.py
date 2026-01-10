@@ -1,5 +1,244 @@
 """HTML templates for Mímir web interface."""
 
+# Shared CSS styles
+SHARED_STYLES = """
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #e2e8f0;
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 30px 20px;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+    }
+    .header h1 {
+        color: #818cf8;
+        font-size: 28px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .header-icon {
+        font-size: 32px;
+    }
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: rgba(99, 102, 241, 0.2);
+        border-radius: 8px;
+        color: #a5b4fc;
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .back-link:hover {
+        background: rgba(99, 102, 241, 0.3);
+        color: #c7d2fe;
+    }
+    .card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    .card h2 {
+        color: #a5b4fc;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        transform: translateY(-1px);
+    }
+    .btn-secondary {
+        background: rgba(99, 102, 241, 0.2);
+        color: #a5b4fc;
+    }
+    .btn-secondary:hover {
+        background: rgba(99, 102, 241, 0.3);
+    }
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .input {
+        padding: 12px 16px;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.6);
+        color: #e2e8f0;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    .input::placeholder {
+        color: #64748b;
+    }
+    .select {
+        padding: 12px 16px;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.6);
+        color: #e2e8f0;
+        font-size: 14px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+        padding-right: 40px;
+    }
+    .select:focus {
+        outline: none;
+        border-color: #6366f1;
+    }
+    .badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge-telegram { background: rgba(0, 136, 204, 0.2); color: #38bdf8; }
+    .badge-web { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+    .badge-user { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .badge-assistant { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .badge-tool { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .badge-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .modal-overlay.visible {
+        display: flex;
+    }
+    .modal {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 16px;
+        padding: 28px;
+        max-width: 450px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .modal h3 {
+        color: #e2e8f0;
+        font-size: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .modal p {
+        color: #94a3b8;
+        margin-bottom: 12px;
+    }
+    .modal-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 24px;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #64748b;
+        padding: 40px;
+    }
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(99, 102, 241, 0.3);
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+"""
+
 # Main status page with chat interface
 STATUS_HTML = """<!DOCTYPE html>
 <html>
@@ -7,142 +246,132 @@ STATUS_HTML = """<!DOCTYPE html>
     <title>Mimir - Home Assistant Agent</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        * {{
-            box-sizing: border-box;
-        }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }}
-        .container {{
-            max-width: 900px;
-            margin: 0 auto;
-        }}
-        h1 {{
-            color: #6366f1;
-            border-bottom: 2px solid #6366f1;
-            padding-bottom: 10px;
-            margin-bottom: 5px;
-        }}
-        .subtitle {{
-            color: #888;
-            margin-bottom: 20px;
-        }}
-        .card {{
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-        }}
-        .card h2 {{
-            margin-top: 0;
-            color: #a5b4fc;
+        """ + SHARED_STYLES + """
+        .status-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
         }}
         .status-item {{
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
         }}
         .status-item:last-child {{
             border-bottom: none;
         }}
-        .status-ok {{ color: #22c55e; }}
-        .status-error {{ color: #ef4444; }}
-        .status-pending {{ color: #f59e0b; }}
+        .status-label {{
+            color: #94a3b8;
+            font-size: 14px;
+        }}
+        .status-value {{
+            font-weight: 500;
+            color: #e2e8f0;
+        }}
+        .status-ok {{ color: #4ade80; }}
+        .status-error {{ color: #f87171; }}
 
-        /* Chat styles */
         .chat-container {{
             display: flex;
             flex-direction: column;
-            height: 400px;
+            height: 450px;
         }}
         .chat-messages {{
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            margin-bottom: 10px;
+            padding: 16px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            margin-bottom: 16px;
         }}
         .message {{
-            margin: 10px 0;
-            padding: 10px 15px;
-            border-radius: 10px;
-            max-width: 80%;
+            margin: 12px 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
             word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }}
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
         }}
         .message.user {{
-            background: #6366f1;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             margin-left: auto;
+            border-bottom-right-radius: 4px;
         }}
         .message.assistant {{
-            background: rgba(255,255,255,0.15);
+            background: rgba(51, 65, 85, 0.8);
+            border-bottom-left-radius: 4px;
         }}
         .message pre {{
-            background: rgba(0,0,0,0.3);
-            padding: 10px;
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
             overflow-x: auto;
             white-space: pre-wrap;
+            margin: 8px 0;
+            font-size: 13px;
         }}
         .message code {{
-            background: rgba(0,0,0,0.3);
-            padding: 2px 5px;
-            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
         }}
         .chat-input-container {{
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }}
         .chat-input {{
             flex: 1;
-            padding: 12px 15px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.1);
-            color: #fff;
+            padding: 14px 18px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #e2e8f0;
             font-size: 14px;
         }}
         .chat-input:focus {{
-            outline: 2px solid #6366f1;
-        }}
-        .chat-input::placeholder {{
-            color: #888;
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
         }}
         .chat-send {{
-            padding: 12px 25px;
+            padding: 14px 28px;
             border: none;
-            border-radius: 8px;
-            background: #6366f1;
-            color: #fff;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }}
         .chat-send:hover {{
-            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }}
         .chat-send:disabled {{
-            background: #4a4a6a;
-            cursor: not-allowed;
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
         }}
         .chat-note {{
             font-size: 12px;
-            color: #888;
-            margin-top: 10px;
+            color: #64748b;
+            margin-top: 12px;
             text-align: center;
         }}
         .typing-indicator {{
             display: none;
-            padding: 10px 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            max-width: 80%;
+            padding: 12px 16px;
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 12px;
+            max-width: 80px;
+            margin: 8px 0;
         }}
         .typing-indicator.visible {{
             display: block;
@@ -162,69 +391,75 @@ STATUS_HTML = """<!DOCTYPE html>
             0%, 100% {{ opacity: 0.3; }}
             50% {{ opacity: 1; }}
         }}
-
-        /* Navigation */
         .nav-links {{
             display: flex;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
         }}
         .nav-link {{
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
+            padding: 14px 24px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
             color: #a5b4fc;
             text-decoration: none;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }}
         .nav-link:hover {{
-            background: rgba(255,255,255,0.2);
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+        }}
+        .nav-icon {{
+            font-size: 20px;
         }}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Mimir</h1>
-        <p class="subtitle">Intelligent Home Assistant Agent with Nordic Wisdom</p>
+        <div class="header">
+            <h1><span class="header-icon">&#129704;</span> Mimir</h1>
+        </div>
 
         <div class="card">
-            <h2>Status</h2>
+            <h2>&#128202; Status</h2>
             <div class="status-item">
-                <span>Version</span>
-                <span>{version}</span>
+                <span class="status-label">Version</span>
+                <span class="status-value">{version}</span>
             </div>
             <div class="status-item">
-                <span>LLM Provider</span>
-                <span>{llm_provider}</span>
+                <span class="status-label">LLM Provider</span>
+                <span class="status-value">{llm_provider}</span>
             </div>
             <div class="status-item">
-                <span>LLM Model</span>
-                <span>{llm_model}</span>
+                <span class="status-label">Model</span>
+                <span class="status-value">{llm_model}</span>
             </div>
             <div class="status-item">
-                <span>Operating Mode</span>
-                <span>{operating_mode}</span>
+                <span class="status-label">Operating Mode</span>
+                <span class="status-value">{operating_mode}</span>
             </div>
             <div class="status-item">
-                <span>Home Assistant</span>
-                <span class="{ha_status_class}">{ha_status}</span>
+                <span class="status-label">Home Assistant</span>
+                <span class="status-value {ha_status_class}">{ha_status}</span>
             </div>
             <div class="status-item">
-                <span>WebSocket</span>
-                <span class="{ws_status_class}">{ws_status}</span>
+                <span class="status-label">WebSocket</span>
+                <span class="status-value {ws_status_class}">{ws_status}</span>
             </div>
             <div class="status-item">
-                <span>Registered Tools</span>
-                <span>{tool_count}</span>
+                <span class="status-label">Registered Tools</span>
+                <span class="status-value">{tool_count}</span>
             </div>
         </div>
 
         <div class="card">
-            <h2>Chat with Mimir</h2>
+            <h2>&#128172; Chat with Mimir</h2>
             <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <!-- Messages will be inserted here -->
-                </div>
+                <div class="chat-messages" id="chatMessages"></div>
                 <div class="typing-indicator" id="typingIndicator">
                     <span class="typing-dot"></span>
                     <span class="typing-dot"></span>
@@ -237,25 +472,26 @@ STATUS_HTML = """<!DOCTYPE html>
                     <button class="chat-send" id="sendBtn" onclick="sendMessage()">Send</button>
                 </div>
             </div>
-            <p class="chat-note">This chat shares history with your Telegram conversation.</p>
+            <p class="chat-note">&#128279; This chat shares history with your Telegram conversation</p>
         </div>
 
         <div class="nav-links">
-            <a href="/audit" class="nav-link">View Audit Logs</a>
-            <a href="/git" class="nav-link">Git History</a>
+            <a href="/audit" class="nav-link">
+                <span class="nav-icon">&#128220;</span>
+                Audit Logs
+            </a>
+            <a href="/git" class="nav-link">
+                <span class="nav-icon">&#128230;</span>
+                Git History
+            </a>
         </div>
     </div>
 
     <script>
-        // Simple markdown-like formatting
         function formatMessage(text) {{
-            // Code blocks
             text = text.replace(/```([\\s\\S]*?)```/g, '<pre>$1</pre>');
-            // Inline code
             text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-            // Bold
             text = text.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
-            // Line breaks
             text = text.replace(/\\n/g, '<br>');
             return text;
         }}
@@ -270,18 +506,15 @@ STATUS_HTML = """<!DOCTYPE html>
         }}
 
         function setTyping(visible) {{
-            const indicator = document.getElementById('typingIndicator');
-            indicator.className = 'typing-indicator' + (visible ? ' visible' : '');
+            document.getElementById('typingIndicator').className = 'typing-indicator' + (visible ? ' visible' : '');
         }}
 
         async function sendMessage() {{
             const input = document.getElementById('chatInput');
             const btn = document.getElementById('sendBtn');
             const message = input.value.trim();
-
             if (!message) return;
 
-            // Add user message
             addMessage('user', message);
             input.value = '';
             btn.disabled = true;
@@ -293,14 +526,8 @@ STATUS_HTML = """<!DOCTYPE html>
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ message: message }})
                 }});
-
                 const data = await response.json();
-
-                if (data.error) {{
-                    addMessage('assistant', 'Error: ' + data.error);
-                }} else {{
-                    addMessage('assistant', data.response);
-                }}
+                addMessage('assistant', data.error ? 'Error: ' + data.error : data.response);
             }} catch (error) {{
                 addMessage('assistant', 'Error: Failed to connect to server');
             }}
@@ -310,12 +537,10 @@ STATUS_HTML = """<!DOCTYPE html>
             input.focus();
         }}
 
-        // Load initial history
         async function loadHistory() {{
             try {{
                 const response = await fetch('/api/chat/history');
                 const data = await response.json();
-
                 if (data.history) {{
                     data.history.forEach(msg => addMessage(msg.role, msg.content));
                 }}
@@ -324,7 +549,6 @@ STATUS_HTML = """<!DOCTYPE html>
             }}
         }}
 
-        // Load history on page load
         loadHistory();
     </script>
 </body>
@@ -338,159 +562,138 @@ AUDIT_HTML = """<!DOCTYPE html>
     <title>Audit Logs - Mimir</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        * {{ box-sizing: border-box; }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }}
-        .container {{ max-width: 1000px; margin: 0 auto; }}
-        h1 {{
-            color: #6366f1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }}
-        .back-link {{
-            font-size: 14px;
-            color: #a5b4fc;
-            text-decoration: none;
-        }}
-        .card {{
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-        }}
+        """ + SHARED_STYLES + """
         .filters {{
             display: flex;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }}
-        .filter-select, .filter-input {{
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }}
-        .filter-btn {{
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            background: #6366f1;
-            color: #fff;
-            cursor: pointer;
-        }}
-        table {{
+        .log-table {{
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
         }}
-        th, td {{
-            padding: 12px;
+        .log-table th {{
             text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }}
-        th {{ color: #a5b4fc; }}
-        tr:hover {{ background: rgba(255,255,255,0.05); }}
-        .badge {{
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 14px 16px;
+            color: #94a3b8;
             font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
         }}
-        .badge-telegram {{ background: #0088cc; }}
-        .badge-web {{ background: #6366f1; }}
-        .badge-user {{ background: #22c55e; }}
-        .badge-assistant {{ background: #f59e0b; }}
-        .badge-tool {{ background: #ef4444; }}
+        .log-table td {{
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+            vertical-align: middle;
+        }}
+        .log-table tr {{
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        .log-table tbody tr:hover {{
+            background: rgba(99, 102, 241, 0.1);
+        }}
         .content-preview {{
-            max-width: 300px;
+            max-width: 350px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #94a3b8;
+            font-size: 13px;
+        }}
+        .timestamp {{
+            font-size: 13px;
+            color: #64748b;
             white-space: nowrap;
         }}
         .pagination {{
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(99, 102, 241, 0.1);
         }}
-        .pagination button {{
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            cursor: pointer;
+        .page-info {{
+            color: #94a3b8;
+            font-size: 14px;
         }}
-        .pagination button:disabled {{
-            opacity: 0.5;
-            cursor: not-allowed;
+        .detail-section {{
+            margin-bottom: 20px;
         }}
-        .detail-modal {{
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            padding: 20px;
+        .detail-section h4 {{
+            color: #a5b4fc;
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+        .detail-content {{
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 300px;
             overflow-y: auto;
         }}
-        .detail-modal.visible {{ display: block; }}
-        .detail-content {{
-            max-width: 800px;
-            margin: 50px auto;
-            background: #1a1a2e;
+        .tool-card {{
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.2);
             border-radius: 10px;
-            padding: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
         }}
-        .detail-close {{
-            float: right;
-            font-size: 24px;
-            cursor: pointer;
-            color: #888;
+        .tool-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }}
-        .detail-pre {{
-            background: rgba(0,0,0,0.3);
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            white-space: pre-wrap;
+        .tool-name {{
+            font-weight: 600;
+            color: #e2e8f0;
+        }}
+        .tool-meta {{
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #64748b;
         }}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>
-            Audit Logs
-            <a href="/" class="back-link">Back to Dashboard</a>
-        </h1>
+        <div class="header">
+            <h1><span class="header-icon">&#128220;</span> Audit Logs</h1>
+            <a href="/" class="back-link">&#8592; Dashboard</a>
+        </div>
 
         <div class="card">
             <div class="filters">
-                <select class="filter-select" id="filterSource">
+                <select class="select" id="filterSource">
                     <option value="">All Sources</option>
                     <option value="telegram">Telegram</option>
                     <option value="web">Web</option>
                 </select>
-                <select class="filter-select" id="filterType">
+                <select class="select" id="filterType">
                     <option value="">All Types</option>
                     <option value="user">User</option>
                     <option value="assistant">Assistant</option>
                     <option value="tool">Tool</option>
+                    <option value="error">Error</option>
                 </select>
-                <input type="text" class="filter-input" id="filterSearch" placeholder="Search...">
-                <button class="filter-btn" onclick="applyFilters()">Filter</button>
+                <input type="text" class="input" id="filterSearch" placeholder="Search content..." style="flex: 1; min-width: 200px;">
+                <button class="btn btn-primary" onclick="applyFilters()">&#128269; Search</button>
             </div>
 
-            <table>
+            <table class="log-table">
                 <thead>
                     <tr>
                         <th>Time</th>
@@ -500,23 +703,25 @@ AUDIT_HTML = """<!DOCTYPE html>
                     </tr>
                 </thead>
                 <tbody id="logsTable">
-                    <!-- Logs will be inserted here -->
+                    <tr><td colspan="4" class="loading"><div class="spinner"></div> Loading...</td></tr>
                 </tbody>
             </table>
 
             <div class="pagination">
-                <button id="prevBtn" onclick="prevPage()" disabled>Previous</button>
-                <span id="pageInfo">Page 1</span>
-                <button id="nextBtn" onclick="nextPage()">Next</button>
+                <button class="btn btn-secondary" id="prevBtn" onclick="prevPage()" disabled>&#8592; Previous</button>
+                <span class="page-info" id="pageInfo">Page 1</span>
+                <button class="btn btn-secondary" id="nextBtn" onclick="nextPage()">Next &#8594;</button>
             </div>
         </div>
     </div>
 
-    <div class="detail-modal" id="detailModal">
-        <div class="detail-content">
-            <span class="detail-close" onclick="closeDetail()">&times;</span>
-            <h2>Log Details</h2>
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal" style="max-width: 700px;">
+            <h3>&#128196; Log Details</h3>
             <div id="detailBody"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            </div>
         </div>
     </div>
 
@@ -525,18 +730,17 @@ AUDIT_HTML = """<!DOCTYPE html>
         const pageSize = 20;
 
         function formatTime(timestamp) {{
-            const date = new Date(timestamp);
-            return date.toLocaleString();
+            return new Date(timestamp).toLocaleString();
+        }}
+
+        function escapeHtml(text) {{
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }}
 
         function getBadgeClass(type) {{
-            const classes = {{
-                'telegram': 'badge-telegram',
-                'web': 'badge-web',
-                'user': 'badge-user',
-                'assistant': 'badge-assistant',
-                'tool': 'badge-tool'
-            }};
+            const classes = {{ telegram: 'badge-telegram', web: 'badge-web', user: 'badge-user', assistant: 'badge-assistant', tool: 'badge-tool', error: 'badge-error' }};
             return classes[type] || '';
         }}
 
@@ -550,31 +754,32 @@ AUDIT_HTML = """<!DOCTYPE html>
             if (type) url += `&type=${{type}}`;
             if (search) url += `&search=${{encodeURIComponent(search)}}`;
 
+            const tbody = document.getElementById('logsTable');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div> Loading...</td></tr>';
+
             try {{
                 const response = await fetch(url);
                 const data = await response.json();
 
-                const tbody = document.getElementById('logsTable');
-                tbody.innerHTML = '';
+                if (!data.logs || data.logs.length === 0) {{
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">&#128220;</div>No logs found</td></tr>';
+                    return;
+                }}
 
-                data.logs.forEach(log => {{
-                    const tr = document.createElement('tr');
-                    tr.onclick = () => showDetail(log.id);
-                    tr.style.cursor = 'pointer';
-                    tr.innerHTML = `
-                        <td>${{formatTime(log.timestamp)}}</td>
+                tbody.innerHTML = data.logs.map(log => `
+                    <tr onclick="showDetail(${{log.id}})">
+                        <td class="timestamp">${{formatTime(log.timestamp)}}</td>
                         <td><span class="badge ${{getBadgeClass(log.source)}}">${{log.source}}</span></td>
                         <td><span class="badge ${{getBadgeClass(log.message_type)}}">${{log.message_type}}</span></td>
-                        <td class="content-preview">${{log.content.substring(0, 100)}}</td>
-                    `;
-                    tbody.appendChild(tr);
-                }});
+                        <td class="content-preview">${{escapeHtml(log.content.substring(0, 100))}}</td>
+                    </tr>
+                `).join('');
 
                 document.getElementById('pageInfo').textContent = `Page ${{currentPage + 1}}`;
                 document.getElementById('prevBtn').disabled = currentPage === 0;
                 document.getElementById('nextBtn').disabled = data.logs.length < pageSize;
             }} catch (error) {{
-                console.error('Failed to load logs:', error);
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Failed to load logs</td></tr>';
             }}
         }}
 
@@ -584,29 +789,45 @@ AUDIT_HTML = """<!DOCTYPE html>
                 const log = await response.json();
 
                 let html = `
-                    <p><strong>Timestamp:</strong> ${{formatTime(log.timestamp)}}</p>
-                    <p><strong>Source:</strong> ${{log.source}}</p>
-                    <p><strong>Type:</strong> ${{log.message_type}}</p>
-                    <p><strong>User ID:</strong> ${{log.user_id || 'N/A'}}</p>
-                    <h3>Content</h3>
-                    <pre class="detail-pre">${{log.content}}</pre>
+                    <div class="detail-section">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                            <div><strong style="color: #94a3b8;">Timestamp:</strong> ${{formatTime(log.timestamp)}}</div>
+                            <div><strong style="color: #94a3b8;">Source:</strong> <span class="badge ${{getBadgeClass(log.source)}}">${{log.source}}</span></div>
+                            <div><strong style="color: #94a3b8;">Type:</strong> <span class="badge ${{getBadgeClass(log.message_type)}}">${{log.message_type}}</span></div>
+                            <div><strong style="color: #94a3b8;">User:</strong> ${{log.user_id || 'N/A'}}</div>
+                        </div>
+                    </div>
+                    <div class="detail-section">
+                        <h4>&#128172; Content</h4>
+                        <div class="detail-content">${{escapeHtml(log.content)}}</div>
+                    </div>
                 `;
 
                 if (log.tool_executions && log.tool_executions.length > 0) {{
-                    html += '<h3>Tool Executions</h3>';
+                    html += '<div class="detail-section"><h4>&#128295; Tool Executions</h4>';
                     log.tool_executions.forEach(tool => {{
                         html += `
-                            <div class="card">
-                                <p><strong>Tool:</strong> ${{tool.tool_name}}</p>
-                                <p><strong>Duration:</strong> ${{tool.duration_ms}}ms</p>
-                                <p><strong>Success:</strong> ${{tool.success ? 'Yes' : 'No'}}</p>
-                                <p><strong>Parameters:</strong></p>
-                                <pre class="detail-pre">${{JSON.stringify(tool.parameters, null, 2)}}</pre>
-                                <p><strong>Result:</strong></p>
-                                <pre class="detail-pre">${{tool.result || 'N/A'}}</pre>
+                            <div class="tool-card">
+                                <div class="tool-header">
+                                    <span class="tool-name">${{tool.tool_name}}</span>
+                                    <span class="badge ${{tool.success ? 'badge-user' : 'badge-error'}}">${{tool.success ? 'Success' : 'Failed'}}</span>
+                                </div>
+                                <div class="tool-meta">
+                                    <span>&#9201; ${{tool.duration_ms}}ms</span>
+                                </div>
+                                <details style="margin-top: 12px;">
+                                    <summary style="cursor: pointer; color: #a5b4fc; font-size: 13px;">Parameters</summary>
+                                    <div class="detail-content" style="margin-top: 8px; font-family: monospace;">${{escapeHtml(JSON.stringify(tool.parameters, null, 2))}}</div>
+                                </details>
+                                ${{tool.result ? `
+                                <details style="margin-top: 8px;">
+                                    <summary style="cursor: pointer; color: #a5b4fc; font-size: 13px;">Result</summary>
+                                    <div class="detail-content" style="margin-top: 8px;">${{escapeHtml(tool.result)}}</div>
+                                </details>` : ''}}
                             </div>
                         `;
                     }});
+                    html += '</div>';
                 }}
 
                 document.getElementById('detailBody').innerHTML = html;
@@ -616,28 +837,14 @@ AUDIT_HTML = """<!DOCTYPE html>
             }}
         }}
 
-        function closeDetail() {{
-            document.getElementById('detailModal').classList.remove('visible');
+        function closeModal() {{
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('visible'));
         }}
 
-        function applyFilters() {{
-            currentPage = 0;
-            loadLogs();
-        }}
+        function applyFilters() {{ currentPage = 0; loadLogs(); }}
+        function prevPage() {{ if (currentPage > 0) {{ currentPage--; loadLogs(); }} }}
+        function nextPage() {{ currentPage++; loadLogs(); }}
 
-        function prevPage() {{
-            if (currentPage > 0) {{
-                currentPage--;
-                loadLogs();
-            }}
-        }}
-
-        function nextPage() {{
-            currentPage++;
-            loadLogs();
-        }}
-
-        // Load logs on page load
         loadLogs();
     </script>
 </body>
@@ -651,202 +858,173 @@ GIT_HTML = """<!DOCTYPE html>
     <title>Git History - Mimir</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        * {{ box-sizing: border-box; }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }}
-        .container {{ max-width: 1000px; margin: 0 auto; }}
-        h1 {{
-            color: #6366f1;
+        """ + SHARED_STYLES + """
+        .status-bar {{
             display: flex;
-            justify-content: space-between;
             align-items: center;
-        }}
-        .back-link {{
-            font-size: 14px;
-            color: #a5b4fc;
-            text-decoration: none;
-        }}
-        .card {{
-            background: rgba(255,255,255,0.1);
+            gap: 12px;
+            padding: 16px 20px;
+            background: rgba(15, 23, 42, 0.6);
             border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
+            margin-bottom: 24px;
+            border-left: 4px solid #64748b;
+        }}
+        .status-bar.clean {{
+            border-left-color: #4ade80;
+            background: rgba(34, 197, 94, 0.1);
+        }}
+        .status-bar.dirty {{
+            border-left-color: #fbbf24;
+            background: rgba(245, 158, 11, 0.1);
+        }}
+        .status-icon {{
+            font-size: 20px;
+        }}
+        .status-text {{
+            flex: 1;
         }}
         .branch-bar {{
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 24px;
             align-items: center;
         }}
-        .branch-select {{
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            min-width: 150px;
+        .branch-label {{
+            color: #94a3b8;
+            font-size: 14px;
         }}
-        .btn {{
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            background: #6366f1;
-            color: #fff;
-            cursor: pointer;
-        }}
-        .btn:hover {{ background: #4f46e5; }}
-        .btn-danger {{
-            background: #ef4444;
-        }}
-        .btn-danger:hover {{ background: #dc2626; }}
         .commit {{
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px 0;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }}
+        .commit:hover {{
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(15, 23, 42, 0.8);
         }}
         .commit-header {{
             display: flex;
             justify-content: space-between;
-            align-items: start;
-            margin-bottom: 10px;
+            align-items: flex-start;
+            gap: 16px;
         }}
-        .commit-sha {{
-            font-family: monospace;
-            color: #6366f1;
-            font-size: 12px;
+        .commit-info {{
+            flex: 1;
         }}
         .commit-message {{
-            font-weight: 500;
-            margin-bottom: 5px;
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 15px;
+            margin-bottom: 8px;
+            line-height: 1.4;
         }}
         .commit-meta {{
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #64748b;
+        }}
+        .commit-meta span {{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .commit-sha {{
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
             font-size: 12px;
-            color: #888;
         }}
         .commit-actions {{
             display: flex;
             gap: 8px;
-        }}
-        .commit-actions button {{
-            padding: 5px 10px;
-            font-size: 12px;
+            flex-shrink: 0;
         }}
         .diff-view {{
-            background: rgba(0,0,0,0.3);
+            background: rgba(0, 0, 0, 0.4);
             border-radius: 8px;
-            padding: 15px;
-            margin-top: 10px;
-            font-family: monospace;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
             font-size: 12px;
+            line-height: 1.6;
             overflow-x: auto;
             white-space: pre;
             display: none;
+            max-height: 400px;
+            overflow-y: auto;
         }}
-        .diff-view.visible {{ display: block; }}
-        .diff-add {{ color: #22c55e; }}
-        .diff-remove {{ color: #ef4444; }}
-        .diff-header {{ color: #6366f1; }}
-        .no-commits {{
-            text-align: center;
-            color: #888;
-            padding: 40px;
+        .diff-view.visible {{
+            display: block;
+            animation: fadeIn 0.3s ease;
         }}
-        .status-bar {{
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .diff-add {{ color: #4ade80; }}
+        .diff-remove {{ color: #f87171; }}
+        .diff-header {{ color: #818cf8; font-weight: 600; }}
+        .diff-file {{ color: #fbbf24; }}
+        .warning-text {{
+            color: #fbbf24;
             font-size: 14px;
-        }}
-        .status-bar.clean {{ border-left: 4px solid #22c55e; }}
-        .status-bar.dirty {{ border-left: 4px solid #f59e0b; }}
-        .modal {{
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            padding: 20px;
-        }}
-        .modal.visible {{ display: flex; align-items: center; justify-content: center; }}
-        .modal-content {{
-            background: #1a1a2e;
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 400px;
-            width: 100%;
-        }}
-        .modal-content h3 {{ margin-top: 0; }}
-        .modal-input {{
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            margin: 10px 0;
-        }}
-        .modal-buttons {{
             display: flex;
-            gap: 10px;
-            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
         }}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>
-            Configuration History
-            <a href="/" class="back-link">Back to Dashboard</a>
-        </h1>
+        <div class="header">
+            <h1><span class="header-icon">&#128230;</span> Configuration History</h1>
+            <a href="/" class="back-link">&#8592; Dashboard</a>
+        </div>
 
         <div class="card">
-            <div id="statusBar" class="status-bar clean">
-                Loading status...
+            <div id="statusBar" class="status-bar">
+                <span class="status-icon">&#8987;</span>
+                <span class="status-text">Loading status...</span>
             </div>
 
             <div class="branch-bar">
-                <select class="branch-select" id="branchSelect" onchange="switchBranch()">
+                <span class="branch-label">&#128279; Branch:</span>
+                <select class="select" id="branchSelect" onchange="switchBranch()">
                     <option>Loading...</option>
                 </select>
-                <button class="btn" onclick="showNewBranchModal()">New Branch</button>
+                <button class="btn btn-secondary" onclick="showNewBranchModal()">+ New Branch</button>
             </div>
 
-            <h2>Commits</h2>
+            <h2>&#128197; Recent Commits</h2>
             <div id="commits">
-                <div class="no-commits">Loading commits...</div>
+                <div class="loading"><div class="spinner"></div> Loading commits...</div>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="newBranchModal">
-        <div class="modal-content">
-            <h3>Create New Branch</h3>
-            <input type="text" class="modal-input" id="newBranchName" placeholder="Branch name">
+    <div class="modal-overlay" id="newBranchModal">
+        <div class="modal">
+            <h3>&#128279; Create New Branch</h3>
+            <p>Create a new branch from the current HEAD.</p>
+            <input type="text" class="input" id="newBranchName" placeholder="Branch name (e.g., backup-jan-10)" style="width: 100%; margin-top: 12px;">
             <div class="modal-buttons">
-                <button class="btn" onclick="closeModal()">Cancel</button>
-                <button class="btn" onclick="createBranch()">Create</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createBranch()">Create Branch</button>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="rollbackModal">
-        <div class="modal-content">
-            <h3>Confirm Rollback</h3>
-            <p>Are you sure you want to rollback to commit <code id="rollbackSha"></code>?</p>
-            <p style="color: #f59e0b;">This will create a new commit reverting all changes since that commit.</p>
+    <div class="modal-overlay" id="rollbackModal">
+        <div class="modal">
+            <h3>&#9888;&#65039; Confirm Rollback</h3>
+            <p>Are you sure you want to rollback to commit <code id="rollbackSha" class="commit-sha"></code>?</p>
+            <p class="warning-text">&#9888;&#65039; This will create a new commit reverting all changes since that point.</p>
             <div class="modal-buttons">
-                <button class="btn" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-danger" onclick="confirmRollback()">Rollback</button>
             </div>
         </div>
@@ -856,20 +1034,8 @@ GIT_HTML = """<!DOCTYPE html>
         let currentRollbackSha = null;
 
         function formatDate(dateStr) {{
-            return new Date(dateStr).toLocaleString();
-        }}
-
-        function formatDiff(diff) {{
-            return diff.split('\\n').map(line => {{
-                if (line.startsWith('+') && !line.startsWith('+++')) {{
-                    return `<span class="diff-add">${{escapeHtml(line)}}</span>`;
-                }} else if (line.startsWith('-') && !line.startsWith('---')) {{
-                    return `<span class="diff-remove">${{escapeHtml(line)}}</span>`;
-                }} else if (line.startsWith('@@') || line.startsWith('diff') || line.startsWith('index')) {{
-                    return `<span class="diff-header">${{escapeHtml(line)}}</span>`;
-                }}
-                return escapeHtml(line);
-            }}).join('\\n');
+            const date = new Date(dateStr);
+            return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {{hour: '2-digit', minute:'2-digit'}});
         }}
 
         function escapeHtml(text) {{
@@ -878,21 +1044,35 @@ GIT_HTML = """<!DOCTYPE html>
             return div.innerHTML;
         }}
 
+        function formatDiff(diff) {{
+            return diff.split('\\n').map(line => {{
+                if (line.startsWith('+') && !line.startsWith('+++')) {{
+                    return `<span class="diff-add">${{escapeHtml(line)}}</span>`;
+                }} else if (line.startsWith('-') && !line.startsWith('---')) {{
+                    return `<span class="diff-remove">${{escapeHtml(line)}}</span>`;
+                }} else if (line.startsWith('@@')) {{
+                    return `<span class="diff-header">${{escapeHtml(line)}}</span>`;
+                }} else if (line.startsWith('diff') || line.startsWith('index') || line.startsWith('---') || line.startsWith('+++')) {{
+                    return `<span class="diff-file">${{escapeHtml(line)}}</span>`;
+                }}
+                return escapeHtml(line);
+            }}).join('\\n');
+        }}
+
         async function loadStatus() {{
             try {{
                 const response = await fetch('/api/git/status');
                 const data = await response.json();
-
                 const statusBar = document.getElementById('statusBar');
                 if (data.clean) {{
                     statusBar.className = 'status-bar clean';
-                    statusBar.textContent = 'Working directory clean - no uncommitted changes';
+                    statusBar.innerHTML = '<span class="status-icon">&#10003;</span><span class="status-text">Working directory clean - all changes committed</span>';
                 }} else {{
                     statusBar.className = 'status-bar dirty';
-                    statusBar.textContent = `${{data.changed_files || 0}} file(s) with uncommitted changes`;
+                    statusBar.innerHTML = `<span class="status-icon">&#9888;</span><span class="status-text">${{data.changed_files || 0}} file(s) with uncommitted changes</span>`;
                 }}
             }} catch (error) {{
-                console.error('Failed to load status:', error);
+                document.getElementById('statusBar').innerHTML = '<span class="status-icon">&#10060;</span><span class="status-text">Failed to load status</span>';
             }}
         }}
 
@@ -900,67 +1080,71 @@ GIT_HTML = """<!DOCTYPE html>
             try {{
                 const response = await fetch('/api/git/branches');
                 const data = await response.json();
-
                 const select = document.getElementById('branchSelect');
+                if (!data.branches || data.branches.length === 0) {{
+                    select.innerHTML = '<option>No branches</option>';
+                    return;
+                }}
                 select.innerHTML = data.branches.map(b =>
                     `<option value="${{b.name}}" ${{b.current ? 'selected' : ''}}>${{b.name}}${{b.current ? ' (current)' : ''}}</option>`
                 ).join('');
             }} catch (error) {{
-                console.error('Failed to load branches:', error);
+                document.getElementById('branchSelect').innerHTML = '<option>Error loading</option>';
             }}
         }}
 
         async function loadCommits() {{
+            const container = document.getElementById('commits');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div> Loading commits...</div>';
+
             try {{
                 const response = await fetch('/api/git/commits?limit=20');
                 const data = await response.json();
 
-                const container = document.getElementById('commits');
-
                 if (!data.commits || data.commits.length === 0) {{
-                    container.innerHTML = '<div class="no-commits">No commits found</div>';
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128230;</div>No commits yet</div>';
                     return;
                 }}
 
                 container.innerHTML = data.commits.map(commit => `
                     <div class="commit">
                         <div class="commit-header">
-                            <div>
+                            <div class="commit-info">
                                 <div class="commit-message">${{escapeHtml(commit.message)}}</div>
-                                <div class="commit-meta">${{commit.author}} - ${{formatDate(commit.date)}}</div>
-                                <div class="commit-sha">${{commit.sha}}</div>
+                                <div class="commit-meta">
+                                    <span>&#128100; ${{escapeHtml(commit.author)}}</span>
+                                    <span>&#128197; ${{formatDate(commit.date)}}</span>
+                                    <span class="commit-sha">${{commit.sha.substring(0, 8)}}</span>
+                                </div>
                             </div>
                             <div class="commit-actions">
-                                <button class="btn" onclick="toggleDiff('${{commit.sha}}')">View Diff</button>
-                                <button class="btn btn-danger" onclick="showRollbackModal('${{commit.sha}}')">Rollback</button>
+                                <button class="btn btn-secondary btn-sm" onclick="toggleDiff('${{commit.sha}}')">&#128065; Diff</button>
+                                <button class="btn btn-danger btn-sm" onclick="showRollbackModal('${{commit.sha}}')">&#8634; Rollback</button>
                             </div>
                         </div>
                         <div class="diff-view" id="diff-${{commit.sha}}"></div>
                     </div>
                 `).join('');
             }} catch (error) {{
-                container.innerHTML = '<div class="no-commits">Failed to load commits</div>';
-                console.error('Failed to load commits:', error);
+                container.innerHTML = '<div class="empty-state">Failed to load commits</div>';
             }}
         }}
 
         async function toggleDiff(sha) {{
             const diffView = document.getElementById(`diff-${{sha}}`);
-
             if (diffView.classList.contains('visible')) {{
                 diffView.classList.remove('visible');
                 return;
             }}
+            diffView.innerHTML = '<div class="loading"><div class="spinner"></div> Loading diff...</div>';
+            diffView.classList.add('visible');
 
             try {{
                 const response = await fetch(`/api/git/diff/${{sha}}`);
                 const data = await response.json();
-
-                diffView.innerHTML = formatDiff(data.diff || 'No changes');
-                diffView.classList.add('visible');
+                diffView.innerHTML = formatDiff(data.diff || 'No changes in this commit');
             }} catch (error) {{
                 diffView.innerHTML = 'Failed to load diff';
-                diffView.classList.add('visible');
             }}
         }}
 
@@ -974,6 +1158,7 @@ GIT_HTML = """<!DOCTYPE html>
                 }});
                 loadCommits();
                 loadStatus();
+                loadBranches();
             }} catch (error) {{
                 alert('Failed to switch branch');
             }}
@@ -982,6 +1167,7 @@ GIT_HTML = """<!DOCTYPE html>
         function showNewBranchModal() {{
             document.getElementById('newBranchModal').classList.add('visible');
             document.getElementById('newBranchName').value = '';
+            document.getElementById('newBranchName').focus();
         }}
 
         function showRollbackModal(sha) {{
@@ -991,13 +1177,12 @@ GIT_HTML = """<!DOCTYPE html>
         }}
 
         function closeModal() {{
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('visible'));
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('visible'));
         }}
 
         async function createBranch() {{
             const name = document.getElementById('newBranchName').value.trim();
             if (!name) return;
-
             try {{
                 await fetch('/api/git/branches', {{
                     method: 'POST',
@@ -1013,19 +1198,17 @@ GIT_HTML = """<!DOCTYPE html>
 
         async function confirmRollback() {{
             if (!currentRollbackSha) return;
-
             try {{
                 const response = await fetch('/api/git/rollback', {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ sha: currentRollbackSha }})
                 }});
-
                 if (response.ok) {{
                     closeModal();
                     loadCommits();
                     loadStatus();
-                    alert('Rollback successful');
+                    alert('Rollback successful!');
                 }} else {{
                     const data = await response.json();
                     alert('Rollback failed: ' + (data.error || 'Unknown error'));
@@ -1035,10 +1218,13 @@ GIT_HTML = """<!DOCTYPE html>
             }}
         }}
 
-        // Load on page start
+        // Initialize
         loadStatus();
         loadBranches();
         loadCommits();
+
+        // Close modal on escape
+        document.addEventListener('keydown', e => {{ if (e.key === 'Escape') closeModal(); }});
     </script>
 </body>
 </html>
