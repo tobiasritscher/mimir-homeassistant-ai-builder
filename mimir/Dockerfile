@@ -6,7 +6,7 @@ FROM ${BUILD_FROM}
 LABEL \
     io.hass.name="Mímir" \
     io.hass.description="Intelligent Home Assistant agent with Nordic wisdom" \
-    io.hass.version="0.1.4" \
+    io.hass.version="0.1.5" \
     io.hass.type="addon" \
     io.hass.arch="amd64|aarch64|armv7"
 
@@ -41,6 +41,3 @@ RUN chmod a+x /run.sh
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-
-# Run the application
-CMD ["/run.sh"]

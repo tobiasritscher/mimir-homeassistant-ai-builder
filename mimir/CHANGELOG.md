@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2025-01-10
+
+### Fixed
+
+- Use with-contenv wrapper to get S6 environment variables (SUPERVISOR_TOKEN)
+- Remove init: false since S6 is running anyway
+- Remove CMD to let S6 handle script execution
+
 ## [0.1.4] - 2025-01-10
 
 ### Fixed

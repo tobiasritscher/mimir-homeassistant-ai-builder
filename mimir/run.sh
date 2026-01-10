@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/with-contenv bash
 set -e
 
 # Configuration file path
@@ -39,6 +39,18 @@ echo "LLM Provider: ${MIMIR_LLM_PROVIDER}"
 echo "LLM Model: ${MIMIR_LLM_MODEL}"
 echo "Operating Mode: ${MIMIR_OPERATING_MODE}"
 echo "Telegram Owner ID: ${MIMIR_TELEGRAM_OWNER_ID}"
+
+# Debug: Show supervisor token status
+if [ -n "$SUPERVISOR_TOKEN" ]; then
+    echo "SUPERVISOR_TOKEN: [SET]"
+else
+    echo "SUPERVISOR_TOKEN: [NOT SET]"
+    # Try to read from S6 environment file if it exists
+    if [ -f /run/s6/container_environment/SUPERVISOR_TOKEN ]; then
+        export SUPERVISOR_TOKEN=$(cat /run/s6/container_environment/SUPERVISOR_TOKEN)
+        echo "SUPERVISOR_TOKEN: [Loaded from S6 file]"
+    fi
+fi
 
 # Create data directories
 mkdir -p /data/mimir

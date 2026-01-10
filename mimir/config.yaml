@@ -1,5 +1,5 @@
 name: Mimir
-version: "0.1.4"
+version: "0.1.5"
 slug: mimir
 description: Intelligent Home Assistant agent with Nordic wisdom
 url: https://github.com/tobiasritscher/mimir-homeassistant-ai-builder
@@ -9,7 +9,6 @@ arch:
   - armv7
 startup: application
 boot: auto
-init: false
 hassio_api: true
 homeassistant_api: true
 auth_api: true
