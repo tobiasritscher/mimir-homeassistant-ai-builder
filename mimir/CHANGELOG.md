@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2025-01-10
+
+### Fixed
+
+- Revert to simple init: false approach (v0.1.4 style) that was working
+- Use internal Docker network (homeassistant:8123) when SUPERVISOR_TOKEN unavailable
+- Removed S6 overlay v3 service structure that caused crashes
+
 ## [0.1.6] - 2025-01-10
 
 ### Changed

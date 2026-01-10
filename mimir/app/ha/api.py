@@ -37,22 +37,26 @@ class HomeAssistantAPI:
         """Initialize the API client.
 
         Args:
-            url: Home Assistant URL. If None, uses Supervisor proxy.
+            url: Home Assistant URL. If None, auto-detects.
             token: Access token. If None, uses SUPERVISOR_TOKEN.
         """
         # Detect add-on environment
         supervisor_token = os.environ.get("SUPERVISOR_TOKEN")
 
         if supervisor_token and not url:
-            # Running as add-on - use Supervisor proxy
+            # Running as add-on with token - use Supervisor proxy
             self._base_url = "http://supervisor/core/api"
             self._token = supervisor_token
             logger.info("Using Supervisor API proxy")
+        elif not url:
+            # Running as add-on without token - try internal Docker network
+            # The 'homeassistant' hostname is available on the Docker network
+            self._base_url = "http://homeassistant:8123/api"
+            self._token = supervisor_token or ""
+            logger.info("Using internal Docker network: %s", self._base_url)
         else:
-            # Standalone mode
-            self._base_url = (
-                f"{url.rstrip('/')}/api" if url else "http://homeassistant.local:8123/api"
-            )
+            # Explicit URL provided
+            self._base_url = f"{url.rstrip('/')}/api"
             self._token = token or ""
             logger.info("Using direct API connection: %s", self._base_url)
 

@@ -1,10 +1,6 @@
-#!/command/with-contenv bash
-# shellcheck shell=bash
-# ==============================================================================
-# Mímir Service
-# ==============================================================================
+#!/bin/bash
+set -e
 
-# Configuration file path
 CONFIG_PATH=/data/options.json
 
 echo "=========================================="
@@ -20,17 +16,10 @@ if [ -f "$CONFIG_PATH" ]; then
     export MIMIR_TELEGRAM_OWNER_ID=$(jq -r '.telegram_owner_id // 0' "$CONFIG_PATH")
     export MIMIR_OPERATING_MODE=$(jq -r '.operating_mode // "normal"' "$CONFIG_PATH")
     export MIMIR_DEBUG=$(jq -r '.debug // false' "$CONFIG_PATH")
-    export MIMIR_YOLO_MODE_DURATION=$(jq -r '.yolo_mode_duration_minutes // 10' "$CONFIG_PATH")
-    export MIMIR_DELETIONS_PER_HOUR=$(jq -r '.deletions_per_hour // 5' "$CONFIG_PATH")
-    export MIMIR_MODIFICATIONS_PER_HOUR=$(jq -r '.modifications_per_hour // 20' "$CONFIG_PATH")
-    export MIMIR_GIT_ENABLED=$(jq -r '.git_enabled // true' "$CONFIG_PATH")
-    export MIMIR_GIT_AUTHOR_NAME=$(jq -r '.git_author_name // "Mimir"' "$CONFIG_PATH")
-    export MIMIR_GIT_AUTHOR_EMAIL=$(jq -r '.git_author_email // "mimir@asgard.local"' "$CONFIG_PATH")
 else
     echo "Warning: Config file not found at $CONFIG_PATH"
 fi
 
-# Set log level based on debug setting
 if [ "$MIMIR_DEBUG" = "true" ]; then
     export LOG_LEVEL="DEBUG"
     echo "Debug mode enabled"
@@ -42,18 +31,11 @@ echo "LLM Provider: ${MIMIR_LLM_PROVIDER}"
 echo "LLM Model: ${MIMIR_LLM_MODEL}"
 echo "Operating Mode: ${MIMIR_OPERATING_MODE}"
 echo "Telegram Owner ID: ${MIMIR_TELEGRAM_OWNER_ID}"
+echo "SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:+[SET]}"
+echo "SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:-[NOT SET]}"
 
-# Debug: Show supervisor token status
-if [ -n "$SUPERVISOR_TOKEN" ]; then
-    echo "SUPERVISOR_TOKEN: [SET]"
-else
-    echo "SUPERVISOR_TOKEN: [NOT SET]"
-fi
-
-# Create data directories
 mkdir -p /data/mimir
 
-# Run the application
 echo "Starting Python application..."
 cd /opt/mimir
 exec python3 -m app.main

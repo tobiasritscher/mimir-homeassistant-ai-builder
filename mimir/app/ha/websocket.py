@@ -40,14 +40,18 @@ class HomeAssistantWebSocket:
         supervisor_token = os.environ.get("SUPERVISOR_TOKEN")
 
         if supervisor_token and not url:
-            # Running as add-on - use Supervisor proxy
+            # Running as add-on with token - use Supervisor proxy
             self._ws_url = "ws://supervisor/core/websocket"
             self._token = supervisor_token
             logger.info("Using Supervisor WebSocket proxy")
+        elif not url:
+            # Running as add-on without token - try internal Docker network
+            self._ws_url = "ws://homeassistant:8123/api/websocket"
+            self._token = supervisor_token or ""
+            logger.info("Using internal Docker WebSocket: %s", self._ws_url)
         else:
-            # Standalone mode
-            base_url = url or "ws://homeassistant.local:8123"
-            self._ws_url = f"{base_url.rstrip('/')}/api/websocket"
+            # Explicit URL provided
+            self._ws_url = f"{url.rstrip('/')}/api/websocket"
             self._token = token or ""
             logger.info("Using direct WebSocket connection: %s", self._ws_url)
 
