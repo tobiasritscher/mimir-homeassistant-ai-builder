@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..config import LLMConfig, LLMProvider as LLMProviderEnum
+from ..config import LLMConfig
+from ..config import LLMProvider as LLMProviderEnum
 from ..utils.logging import get_logger
 from .anthropic import AnthropicProvider
-from .base import LLMProvider
 
 if TYPE_CHECKING:
-    pass
+    from .base import LLMProvider
 
 logger = get_logger(__name__)
 

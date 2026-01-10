@@ -228,9 +228,7 @@ class HomeAssistantWebSocket:
                 # Reconnect with backoff
                 logger.info("Reconnecting in %.1f seconds...", self._reconnect_delay)
                 await asyncio.sleep(self._reconnect_delay)
-                self._reconnect_delay = min(
-                    self._reconnect_delay * 2, self._max_reconnect_delay
-                )
+                self._reconnect_delay = min(self._reconnect_delay * 2, self._max_reconnect_delay)
 
             except asyncio.CancelledError:
                 logger.info("WebSocket client cancelled")

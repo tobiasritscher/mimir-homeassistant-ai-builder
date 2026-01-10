@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -25,16 +26,12 @@ class EntityState:
         last_updated = None
 
         if "last_changed" in data:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 last_changed = datetime.fromisoformat(data["last_changed"].replace("Z", "+00:00"))
-            except (ValueError, TypeError):
-                pass
 
         if "last_updated" in data:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 last_updated = datetime.fromisoformat(data["last_updated"].replace("Z", "+00:00"))
-            except (ValueError, TypeError):
-                pass
 
         return cls(
             entity_id=data["entity_id"],
@@ -112,10 +109,8 @@ class Event:
         """Create Event from WebSocket message."""
         time_fired = None
         if "time_fired" in data:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 time_fired = datetime.fromisoformat(data["time_fired"].replace("Z", "+00:00"))
-            except (ValueError, TypeError):
-                pass
 
         return cls(
             event_type=data.get("event_type", ""),
@@ -177,10 +172,8 @@ class TelegramMessage:
         """Create TelegramMessage from event data."""
         date = None
         if "date" in data:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 date = datetime.fromtimestamp(data["date"])
-            except (ValueError, TypeError):
-                pass
 
         return cls(
             message_id=data.get("message_id", 0),

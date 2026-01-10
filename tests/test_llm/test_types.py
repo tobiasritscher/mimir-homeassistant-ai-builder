@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
-
 from mimir.app.llm.types import (
-    ContentBlock,
     Message,
     Response,
     Role,
     StopReason,
     Tool,
     ToolCall,
-    ToolResult,
     Usage,
 )
 

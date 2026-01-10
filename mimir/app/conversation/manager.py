@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..llm.types import Message, Role, StopReason, ToolCall
+from ..llm.types import Message, ToolCall
 from ..utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -132,7 +132,7 @@ class ConversationManager:
         """Trim history to max_history messages."""
         if len(self._messages) > self._max_history:
             # Keep the most recent messages
-            self._messages = self._messages[-self._max_history:]
+            self._messages = self._messages[-self._max_history :]
             logger.debug("History trimmed to %d messages", len(self._messages))
 
     async def _execute_tool_calls(

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..llm.types import Tool as LLMTool
 from ..utils.logging import get_logger
 
 if TYPE_CHECKING:
+    from ..llm.types import Tool as LLMTool
     from .base import BaseTool
 
 logger = get_logger(__name__)

@@ -5,7 +5,9 @@
       "WebFetch(domain:developers.home-assistant.io)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:blog.michal.pawlik.dev)",
-      "WebFetch(domain:www.home-assistant.io)"
+      "WebFetch(domain:www.home-assistant.io)",
+      "Bash(pip install:*)",
+      "Bash(ruff check:*)"
     ]
   },
   "sandbox": {

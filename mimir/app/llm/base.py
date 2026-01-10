@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from .types import Message, Response, ResponseChunk, Tool
 
 
@@ -80,4 +81,4 @@ class LLMProvider(ABC):
 
         Override this method if the provider needs cleanup.
         """
-        pass
+        return None

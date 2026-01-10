@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from anthropic import AsyncAnthropic
 
 from ..utils.logging import get_logger
 from .base import LLMProvider
 from .types import (
-    ContentBlock,
     Message,
     Response,
     ResponseChunk,
@@ -19,9 +17,11 @@ from .types import (
     StopReason,
     Tool,
     ToolCall,
-    ToolResult,
     Usage,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = get_logger(__name__)
 

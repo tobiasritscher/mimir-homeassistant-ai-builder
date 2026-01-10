@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
-import pytest
-
 from mimir.app.ha.types import Entity, EntityState, Event, Service, TelegramMessage
 
 

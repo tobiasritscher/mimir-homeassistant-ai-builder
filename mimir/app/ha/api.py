@@ -8,7 +8,7 @@ from typing import Any
 import aiohttp
 
 from ..utils.logging import get_logger
-from .types import Entity, EntityState, Service
+from .types import EntityState, Service
 
 logger = get_logger(__name__)
 
@@ -50,7 +50,9 @@ class HomeAssistantAPI:
             logger.info("Using Supervisor API proxy")
         else:
             # Standalone mode
-            self._base_url = f"{url.rstrip('/')}/api" if url else "http://homeassistant.local:8123/api"
+            self._base_url = (
+                f"{url.rstrip('/')}/api" if url else "http://homeassistant.local:8123/api"
+            )
             self._token = token or ""
             logger.info("Using direct API connection: %s", self._base_url)
 

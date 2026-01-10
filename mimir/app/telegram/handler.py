@@ -192,10 +192,7 @@ class TelegramHandler:
             text: Notification text.
             title: Optional title.
         """
-        if title:
-            message = f"*{title}*\n\n{text}"
-        else:
-            message = text
+        message = f"*{title}*\n\n{text}" if title else text
 
         # Send to owner's chat (using owner_id as chat_id for private chats)
         await self.send_message(message, self._owner_id)

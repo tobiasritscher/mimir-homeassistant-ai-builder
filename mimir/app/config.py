@@ -157,7 +157,7 @@ def load_addon_options() -> dict[str, Any]:
     """
     options_path = Path("/data/options.json")
     if options_path.exists():
-        with open(options_path) as f:
+        with options_path.open() as f:
             return json.load(f)
     return {}
 

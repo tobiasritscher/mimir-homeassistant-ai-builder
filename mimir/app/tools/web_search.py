@@ -6,7 +6,7 @@ documentation, forums, HACS components, and other resources.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from duckduckgo_search import DDGS
 
@@ -24,7 +24,7 @@ class WebSearchTool(BaseTool):
     """
 
     # Sites to prioritize in search results
-    PRIORITY_SITES = [
+    PRIORITY_SITES: ClassVar[list[str]] = [
         "home-assistant.io",
         "community.home-assistant.io",
         "github.com/home-assistant",

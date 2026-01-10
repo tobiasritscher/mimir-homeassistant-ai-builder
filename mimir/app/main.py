@@ -6,13 +6,13 @@ Main entry point for the Mímir add-on.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import signal
 from typing import TYPE_CHECKING
 
 from .config import load_config
 from .conversation.manager import ConversationManager
 from .ha.api import HomeAssistantAPI
-from .ha.types import TelegramMessage
 from .ha.websocket import HomeAssistantWebSocket
 from .llm.factory import create_provider
 from .telegram.handler import TelegramHandler
@@ -21,7 +21,7 @@ from .tools.web_search import HACSSearchTool, HomeAssistantDocsSearchTool, WebSe
 from .utils.logging import get_logger, setup_logging
 
 if TYPE_CHECKING:
-    pass
+    from .ha.types import TelegramMessage
 
 logger = get_logger(__name__)
 
@@ -136,10 +136,8 @@ class MimirAgent:
 
             # Cancel WebSocket task
             ws_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await ws_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Mímir shutdown complete")
 

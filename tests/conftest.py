@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from mimir.app.config import LLMConfig, LLMProvider, MimirConfig, OperatingMode
+from mimir.app.config import LLMConfig, LLMProvider, MimirConfig
 from mimir.app.llm.base import LLMProvider as LLMProviderBase
-from mimir.app.llm.types import Message, Response, ResponseChunk, Role, StopReason, Tool, Usage
+from mimir.app.llm.types import Message, Response, ResponseChunk, StopReason, Tool, Usage
 from mimir.app.tools.base import BaseTool
 from mimir.app.tools.registry import ToolRegistry
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 
 @pytest.fixture
