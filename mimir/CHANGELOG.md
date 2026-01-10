@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.10] - 2025-01-10
+
+### Added
+
+- Automation CRUD tools:
+  - `get_automation_config` - Get full YAML config of an automation
+  - `create_automation` - Create a new automation
+  - `update_automation` - Update an existing automation
+  - `delete_automation` - Delete an automation
+- HA API methods for automation management
+
 ## [0.1.9] - 2025-01-10
 
 ### Added

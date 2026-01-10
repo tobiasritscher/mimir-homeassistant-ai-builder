@@ -235,6 +235,66 @@ class HomeAssistantAPI:
 
         await self.call_service("telegram_bot", "send_message", service_data)
 
+    # Automation CRUD operations
+
+    async def get_automation_config(self, automation_id: str) -> dict[str, Any]:
+        """Get the configuration of an automation.
+
+        Args:
+            automation_id: The automation ID (without 'automation.' prefix).
+
+        Returns:
+            The automation configuration dict.
+        """
+        # Remove 'automation.' prefix if present
+        if automation_id.startswith("automation."):
+            automation_id = automation_id[11:]
+
+        result: dict[str, Any] = await self.get(f"config/automation/config/{automation_id}")
+        return result
+
+    async def create_automation(
+        self,
+        automation_id: str,
+        config: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create or update an automation.
+
+        Args:
+            automation_id: The automation ID (without 'automation.' prefix).
+            config: The automation configuration (alias, trigger, action, etc.).
+
+        Returns:
+            The result of the operation.
+        """
+        # Remove 'automation.' prefix if present
+        if automation_id.startswith("automation."):
+            automation_id = automation_id[11:]
+
+        logger.info("Creating/updating automation: %s", automation_id)
+        result: dict[str, Any] = await self.post(
+            f"config/automation/config/{automation_id}",
+            config,
+        )
+        return result
+
+    async def delete_automation(self, automation_id: str) -> dict[str, Any]:
+        """Delete an automation.
+
+        Args:
+            automation_id: The automation ID (without 'automation.' prefix).
+
+        Returns:
+            The result of the operation.
+        """
+        # Remove 'automation.' prefix if present
+        if automation_id.startswith("automation."):
+            automation_id = automation_id[11:]
+
+        logger.info("Deleting automation: %s", automation_id)
+        result: dict[str, Any] = await self.delete(f"config/automation/config/{automation_id}")
+        return result
+
     async def close(self) -> None:
         """Close the API session."""
         if self._session and not self._session.closed:

@@ -20,12 +20,16 @@ from .llm.factory import create_provider
 from .telegram.handler import TelegramHandler
 from .tools.ha_tools import (
     CallServiceTool,
+    CreateAutomationTool,
+    DeleteAutomationTool,
+    GetAutomationConfigTool,
     GetAutomationsTool,
     GetEntitiesTool,
     GetEntityStateTool,
     GetErrorLogTool,
     GetLogbookTool,
     GetServicesTool,
+    UpdateAutomationTool,
 )
 from .tools.registry import ToolRegistry
 from .tools.web_search import HACSSearchTool, HomeAssistantDocsSearchTool, WebSearchTool
@@ -135,7 +139,7 @@ STATUS_HTML = """<!DOCTYPE html>
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.9"
+    VERSION = "0.1.10"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -175,6 +179,10 @@ class MimirAgent:
         self._tool_registry.register(GetEntitiesTool(self._ha_api))
         self._tool_registry.register(GetEntityStateTool(self._ha_api))
         self._tool_registry.register(GetAutomationsTool(self._ha_api))
+        self._tool_registry.register(GetAutomationConfigTool(self._ha_api))
+        self._tool_registry.register(CreateAutomationTool(self._ha_api))
+        self._tool_registry.register(UpdateAutomationTool(self._ha_api))
+        self._tool_registry.register(DeleteAutomationTool(self._ha_api))
         self._tool_registry.register(CallServiceTool(self._ha_api))
         self._tool_registry.register(GetServicesTool(self._ha_api))
         self._tool_registry.register(GetErrorLogTool(self._ha_api))

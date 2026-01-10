@@ -4,8 +4,9 @@ anthropic>=0.40.0
 # Async HTTP
 aiohttp>=3.9.0
 
-# YAML handling (preserves comments and formatting)
+# YAML handling
 ruamel.yaml>=0.18.0
+pyyaml>=6.0.0
 
 # Configuration and validation
 pydantic>=2.0.0

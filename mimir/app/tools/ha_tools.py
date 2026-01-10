@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import yaml
+
 from ..utils.logging import get_logger
 from .base import BaseTool
 
@@ -476,3 +478,253 @@ class GetLogbookTool(BaseTool):
         except Exception as e:
             logger.exception("Failed to get logbook: %s", e)
             return f"Error getting logbook: {e}"
+
+
+class GetAutomationConfigTool(BaseTool):
+    """Tool to get the full configuration of an automation."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "get_automation_config"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Get the full YAML configuration of an automation. "
+            "Use this to see the triggers, conditions, and actions of an automation before modifying it."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "automation_id": {
+                    "type": "string",
+                    "description": "The automation entity ID (e.g., 'automation.motion_lights' or just 'motion_lights').",
+                },
+            },
+            "required": ["automation_id"],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        automation_id = kwargs.get("automation_id", "")
+
+        if not automation_id:
+            return "Error: automation_id is required."
+
+        try:
+            config = await self._ha_api.get_automation_config(automation_id)
+
+            # Format as YAML for readability
+            yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+            return f"Automation configuration for '{automation_id}':\n\n```yaml\n{yaml_output}```"
+
+        except Exception as e:
+            logger.exception("Failed to get automation config: %s", e)
+            return f"Error getting automation config: {e}"
+
+
+class CreateAutomationTool(BaseTool):
+    """Tool to create a new automation."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "create_automation"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Create a new automation in Home Assistant. "
+            "Provide the automation ID and full configuration including alias, triggers, conditions, and actions. "
+            "The configuration should follow Home Assistant automation YAML format."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "automation_id": {
+                    "type": "string",
+                    "description": "Unique ID for the automation (lowercase, underscores, e.g., 'bedroom_motion_light').",
+                },
+                "alias": {
+                    "type": "string",
+                    "description": "Human-readable name for the automation.",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of what the automation does.",
+                },
+                "trigger": {
+                    "type": "array",
+                    "description": "List of triggers (e.g., [{'platform': 'state', 'entity_id': 'binary_sensor.motion'}]).",
+                },
+                "condition": {
+                    "type": "array",
+                    "description": "List of conditions (optional).",
+                },
+                "action": {
+                    "type": "array",
+                    "description": "List of actions (e.g., [{'service': 'light.turn_on', 'target': {'entity_id': 'light.bedroom'}}]).",
+                },
+                "mode": {
+                    "type": "string",
+                    "description": "Automation mode: 'single', 'restart', 'queued', or 'parallel'. Default is 'single'.",
+                },
+            },
+            "required": ["automation_id", "alias", "trigger", "action"],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        automation_id = kwargs.get("automation_id", "")
+        alias = kwargs.get("alias", "")
+        description = kwargs.get("description", "")
+        trigger = kwargs.get("trigger", [])
+        condition = kwargs.get("condition", [])
+        action = kwargs.get("action", [])
+        mode = kwargs.get("mode", "single")
+
+        if not automation_id or not alias or not trigger or not action:
+            return "Error: automation_id, alias, trigger, and action are required."
+
+        try:
+            config: dict[str, Any] = {
+                "alias": alias,
+                "trigger": trigger,
+                "action": action,
+                "mode": mode,
+            }
+
+            if description:
+                config["description"] = description
+
+            if condition:
+                config["condition"] = condition
+
+            await self._ha_api.create_automation(automation_id, config)
+
+            # Reload automations to apply changes
+            await self._ha_api.call_service("automation", "reload")
+
+            yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            return f"Automation '{alias}' (automation.{automation_id}) created successfully!\n\n```yaml\n{yaml_output}```"
+
+        except Exception as e:
+            logger.exception("Failed to create automation: %s", e)
+            return f"Error creating automation: {e}"
+
+
+class UpdateAutomationTool(BaseTool):
+    """Tool to update an existing automation."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "update_automation"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Update an existing automation. First use get_automation_config to see the current config, "
+            "then provide the full updated configuration. This will overwrite the existing automation."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "automation_id": {
+                    "type": "string",
+                    "description": "The automation ID to update (e.g., 'motion_lights').",
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Full automation configuration (alias, trigger, condition, action, mode).",
+                },
+            },
+            "required": ["automation_id", "config"],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        automation_id = kwargs.get("automation_id", "")
+        config = kwargs.get("config", {})
+
+        if not automation_id or not config:
+            return "Error: automation_id and config are required."
+
+        if "alias" not in config or "trigger" not in config or "action" not in config:
+            return "Error: config must include at least 'alias', 'trigger', and 'action'."
+
+        try:
+            await self._ha_api.create_automation(automation_id, config)
+
+            # Reload automations to apply changes
+            await self._ha_api.call_service("automation", "reload")
+
+            yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            return f"Automation 'automation.{automation_id}' updated successfully!\n\n```yaml\n{yaml_output}```"
+
+        except Exception as e:
+            logger.exception("Failed to update automation: %s", e)
+            return f"Error updating automation: {e}"
+
+
+class DeleteAutomationTool(BaseTool):
+    """Tool to delete an automation."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "delete_automation"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Delete an automation from Home Assistant. "
+            "This permanently removes the automation. Use with caution."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "automation_id": {
+                    "type": "string",
+                    "description": "The automation ID to delete (e.g., 'motion_lights').",
+                },
+            },
+            "required": ["automation_id"],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        automation_id = kwargs.get("automation_id", "")
+
+        if not automation_id:
+            return "Error: automation_id is required."
+
+        try:
+            await self._ha_api.delete_automation(automation_id)
+
+            # Reload automations to apply changes
+            await self._ha_api.call_service("automation", "reload")
+
+            return f"Automation 'automation.{automation_id}' deleted successfully."
+
+        except Exception as e:
+            logger.exception("Failed to delete automation: %s", e)
+            return f"Error deleting automation: {e}"
