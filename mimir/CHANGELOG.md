@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.12] - 2025-01-10
+
+### Added
+
+- **Web Chat Interface**: Chat with Mímir directly from the web UI at `/`
+  - Shares conversation history with Telegram
+  - Real-time message display with typing indicator
+- **Audit Logging**: Full audit trail at `/audit`
+  - Logs all messages (user, assistant, tool calls)
+  - Records tool execution details (parameters, results, duration)
+  - Filter by source, type, or search content
+- **Git Version Control**: Manage HA config history at `/git`
+  - View commit history with diffs
+  - Rollback to previous configurations
+  - Create and switch branches
+- **Automation Preservation**: Mímir now makes minimal, surgical edits
+  - Shows diff of proposed changes before applying
+  - Preserves existing logic when modifying automations
+  - Asks for confirmation on significant changes
+
+### Changed
+
+- Enhanced status page with embedded chat interface
+- Database storage at `/data/mimir.db` for audit logs
+
 ## [0.1.11] - 2025-01-10
 
 ### Fixed

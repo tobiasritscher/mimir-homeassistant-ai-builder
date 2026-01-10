@@ -1,5 +1,5 @@
 name: Mimir
-version: "0.1.11"
+version: "0.1.12"
 slug: mimir
 description: Intelligent Home Assistant agent with Nordic wisdom
 url: https://github.com/tobiasritscher/mimir-homeassistant-ai-builder
@@ -21,6 +21,7 @@ map:
   - config:rw
   - share:rw
   - ssl:ro
+  - data:rw
 options:
   llm_provider: anthropic
   llm_api_key: ""
