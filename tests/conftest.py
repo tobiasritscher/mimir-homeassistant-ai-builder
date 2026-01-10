@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
 from mimir.app.config import LLMConfig, LLMProvider, MimirConfig
 from mimir.app.llm.base import LLMProvider as LLMProviderBase
 from mimir.app.llm.types import Message, Response, ResponseChunk, StopReason, Tool, Usage
 from mimir.app.tools.base import BaseTool
 from mimir.app.tools.registry import ToolRegistry
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
 
 
 @pytest.fixture
@@ -99,7 +99,7 @@ class MockLLMProvider(LLMProviderBase):
         system: str | None = None,
         max_tokens: int | None = None,
         temperature: float | None = None,
-    ) -> AsyncIterator[ResponseChunk]:
+    ) -> AsyncGenerator[ResponseChunk, None]:
         response = await self.complete(messages, tools, system, max_tokens, temperature)
         yield ResponseChunk(delta_content=response.content)
         yield ResponseChunk(is_final=True, response=response)

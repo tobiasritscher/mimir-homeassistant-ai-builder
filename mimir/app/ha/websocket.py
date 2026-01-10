@@ -270,7 +270,8 @@ class HomeAssistantWebSocket:
                     data = json.loads(msg.data)
                     if data.get("id") == msg_id:
                         if data.get("success"):
-                            return data.get("result")
+                            result: dict[str, Any] | None = data.get("result")
+                            return result
                         else:
                             logger.error("Command failed: %s", data.get("error"))
                             return None

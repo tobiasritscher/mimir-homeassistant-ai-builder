@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
     from .types import Message, Response, ResponseChunk, Tool
 
@@ -54,14 +54,14 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
-    async def stream(
+    def stream(
         self,
         messages: list[Message],
         tools: list[Tool] | None = None,
         system: str | None = None,
         max_tokens: int | None = None,
         temperature: float | None = None,
-    ) -> AsyncIterator[ResponseChunk]:
+    ) -> AsyncGenerator[ResponseChunk, None]:
         """Stream a completion response from the LLM.
 
         Args:

@@ -126,7 +126,8 @@ class HomeAssistantAPI:
 
     async def get_config(self) -> dict[str, Any]:
         """Get Home Assistant configuration."""
-        return await self.get("config")
+        result: dict[str, Any] = await self.get("config")
+        return result
 
     async def get_states(self) -> list[EntityState]:
         """Get all entity states."""
@@ -173,7 +174,8 @@ class HomeAssistantAPI:
 
     async def get_error_log(self) -> str:
         """Get the Home Assistant error log."""
-        return await self.get("error_log")
+        result: str = await self.get("error_log")
+        return result
 
     async def get_logbook(
         self,
@@ -193,7 +195,8 @@ class HomeAssistantAPI:
         if params:
             endpoint += "?" + "&".join(params)
 
-        return await self.get(endpoint)
+        result: list[dict[str, Any]] = await self.get(endpoint)
+        return result
 
     async def get_history(
         self,

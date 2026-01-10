@@ -17,8 +17,7 @@ def setup_logging(level: LogLevel | None = None) -> logging.Logger:
     Returns:
         The root logger for Mímir.
     """
-    if level is None:
-        level = os.environ.get("LOG_LEVEL", "INFO").upper()  # type: ignore[assignment]
+    level_str: str = level if level is not None else os.environ.get("LOG_LEVEL", "INFO").upper()
 
     # Create formatter
     formatter = logging.Formatter(
@@ -32,20 +31,20 @@ def setup_logging(level: LogLevel | None = None) -> logging.Logger:
 
     # Configure root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, level))
+    root_logger.setLevel(getattr(logging, level_str))
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
 
     # Create Mímir logger
     logger = logging.getLogger("mimir")
-    logger.setLevel(getattr(logging, level))
+    logger.setLevel(getattr(logging, level_str))
 
     # Reduce noise from third-party libraries
     logging.getLogger("aiohttp").setLevel(logging.WARNING)
     logging.getLogger("anthropic").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
-    logger.debug("Logging configured with level: %s", level)
+    logger.debug("Logging configured with level: %s", level_str)
 
     return logger
 

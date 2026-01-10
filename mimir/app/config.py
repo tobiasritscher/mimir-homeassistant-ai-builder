@@ -158,7 +158,8 @@ def load_addon_options() -> dict[str, Any]:
     options_path = Path("/data/options.json")
     if options_path.exists():
         with options_path.open() as f:
-            return json.load(f)
+            data: dict[str, Any] = json.load(f)
+            return data
     return {}
 
 

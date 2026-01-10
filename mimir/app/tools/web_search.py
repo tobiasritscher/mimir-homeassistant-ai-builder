@@ -91,16 +91,18 @@ class WebSearchTool(BaseTool):
         }
         return site_map.get(site or "", "")
 
-    async def execute(self, query: str, site: str | None = None) -> str:
+    async def execute(self, **kwargs: Any) -> str:
         """Execute a web search.
 
         Args:
-            query: The search query.
-            site: Optional site filter.
+            **kwargs: Must include 'query', optionally 'site'.
 
         Returns:
             Formatted search results.
         """
+        query: str = kwargs["query"]
+        site: str | None = kwargs.get("site")
+
         try:
             # Build the search query
             search_query = query
@@ -174,8 +176,10 @@ class HomeAssistantDocsSearchTool(BaseTool):
             "required": ["query"],
         }
 
-    async def execute(self, query: str) -> str:
+    async def execute(self, **kwargs: Any) -> str:
         """Search Home Assistant documentation."""
+        query: str = kwargs["query"]
+
         try:
             search_query = f"site:home-assistant.io {query}"
             results = list(self._ddgs.text(search_query, max_results=5))
@@ -244,8 +248,11 @@ class HACSSearchTool(BaseTool):
             "required": ["query"],
         }
 
-    async def execute(self, query: str, component_type: str = "any") -> str:
+    async def execute(self, **kwargs: Any) -> str:
         """Search for HACS components."""
+        query: str = kwargs["query"]
+        component_type: str = kwargs.get("component_type", "any")
+
         try:
             # Build search query
             type_terms = {

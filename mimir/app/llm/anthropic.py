@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING, Any
 
 from anthropic import AsyncAnthropic
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
 from ..utils.logging import get_logger
 from .base import LLMProvider
 from .types import (
@@ -19,9 +22,6 @@ from .types import (
     ToolCall,
     Usage,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
 
 logger = get_logger(__name__)
 
@@ -61,7 +61,7 @@ class AnthropicProvider(LLMProvider):
 
     def _convert_messages(self, messages: list[Message]) -> list[dict[str, Any]]:
         """Convert internal messages to Anthropic format."""
-        result = []
+        result: list[dict[str, Any]] = []
 
         for msg in messages:
             if msg.role == Role.USER:
@@ -69,10 +69,10 @@ class AnthropicProvider(LLMProvider):
                     result.append({"role": "user", "content": msg.content})
                 else:
                     # Handle tool results
-                    content_blocks = []
+                    tool_result_blocks: list[dict[str, Any]] = []
                     for block in msg.content:
                         if block.type == "tool_result" and block.tool_result:
-                            content_blocks.append(
+                            tool_result_blocks.append(
                                 {
                                     "type": "tool_result",
                                     "tool_use_id": block.tool_result.tool_call_id,
@@ -80,19 +80,19 @@ class AnthropicProvider(LLMProvider):
                                     "is_error": block.tool_result.is_error,
                                 }
                             )
-                    result.append({"role": "user", "content": content_blocks})
+                    result.append({"role": "user", "content": tool_result_blocks})
 
             elif msg.role == Role.ASSISTANT:
-                content_blocks: list[dict[str, Any]] = []
+                assistant_blocks: list[dict[str, Any]] = []
 
                 # Add text content if present
                 if msg.content and isinstance(msg.content, str):
-                    content_blocks.append({"type": "text", "text": msg.content})
+                    assistant_blocks.append({"type": "text", "text": msg.content})
 
                 # Add tool use blocks
                 if msg.tool_calls:
                     for tool_call in msg.tool_calls:
-                        content_blocks.append(
+                        assistant_blocks.append(
                             {
                                 "type": "tool_use",
                                 "id": tool_call.id,
@@ -101,7 +101,7 @@ class AnthropicProvider(LLMProvider):
                             }
                         )
 
-                result.append({"role": "assistant", "content": content_blocks})
+                result.append({"role": "assistant", "content": assistant_blocks})
 
         return result
 
@@ -192,7 +192,7 @@ class AnthropicProvider(LLMProvider):
         system: str | None = None,
         max_tokens: int | None = None,
         temperature: float | None = None,
-    ) -> AsyncIterator[ResponseChunk]:
+    ) -> AsyncGenerator[ResponseChunk, None]:
         """Stream a completion response from Claude."""
         anthropic_messages = self._convert_messages(messages)
 
