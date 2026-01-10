@@ -40,9 +40,7 @@ class GitManager:
         """Check if git is enabled."""
         return self._config.enabled
 
-    async def _run_git(
-        self, *args: str, timeout: float = 30.0
-    ) -> tuple[str, str, int]:
+    async def _run_git(self, *args: str, timeout: float = 30.0) -> tuple[str, str, int]:
         """Run a git command.
 
         Args:
@@ -62,15 +60,13 @@ class GitManager:
         )
 
         try:
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             return (
                 stdout.decode("utf-8", errors="replace").strip(),
                 stderr.decode("utf-8", errors="replace").strip(),
                 process.returncode or 0,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             process.kill()
             await process.wait()
             logger.warning("Git command timed out: %s", " ".join(cmd))
@@ -118,6 +114,95 @@ class GitManager:
         self._initialized = True
         logger.info("Git repository initialized")
         return True
+
+    async def generate_commit_message(self) -> str:
+        """Generate a meaningful commit message based on changed files.
+
+        Returns:
+            Generated commit message.
+        """
+        stdout, _stderr, code = await self._run_git("status", "--porcelain")
+        if code != 0 or not stdout:
+            return "Update configuration"
+
+        lines = [line for line in stdout.split("\n") if line.strip()]
+        changes: dict[str, list[str]] = {"added": [], "modified": [], "deleted": []}
+
+        for line in lines:
+            status = line[:2].strip()
+            filepath = line[3:].strip()
+            filename = filepath.split("/")[-1]
+
+            if status in ("A", "??"):
+                changes["added"].append(filename)
+            elif status == "D":
+                changes["deleted"].append(filename)
+            else:
+                changes["modified"].append(filename)
+
+        # Categorize by file type
+        automations = []
+        scripts = []
+        configs = []
+        others = []
+
+        for files in changes.values():
+            for f in files:
+                f_lower = f.lower()
+                if "automation" in f_lower:
+                    automations.append(f)
+                elif "script" in f_lower:
+                    scripts.append(f)
+                elif f_lower in (
+                    "configuration.yaml",
+                    "secrets.yaml",
+                    "customize.yaml",
+                ):
+                    configs.append(f)
+                else:
+                    others.append(f)
+
+        # Build message
+        parts = []
+        if automations:
+            parts.append(f"automations ({len(automations)})")
+        if scripts:
+            parts.append(f"scripts ({len(scripts)})")
+        if configs:
+            parts.append(f"core config ({len(configs)})")
+        if others:
+            parts.append(f"other files ({len(others)})")
+
+        if not parts:
+            return "Update configuration"
+
+        total = len(lines)
+        action = "Update"
+        if changes["added"] and not changes["modified"] and not changes["deleted"]:
+            action = "Add"
+        elif changes["deleted"] and not changes["added"] and not changes["modified"]:
+            action = "Remove"
+
+        return f"{action} {', '.join(parts)} - {total} file(s) changed"
+
+    async def commit_all(self) -> dict[str, Any]:
+        """Commit all changes with an auto-generated message.
+
+        Returns:
+            Commit info dict with message used.
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        # Generate message before staging (to see what's changing)
+        message = await self.generate_commit_message()
+
+        # Perform the commit
+        result = await self.commit(message)
+        if result.get("status") == "ok":
+            result["message"] = message
+
+        return result
 
     async def commit(
         self,
@@ -252,16 +337,14 @@ class GitManager:
             return f"Error: {stat_err}"
 
         # Count files changed from stat output
-        stat_lines = [l for l in stat_out.split("\n") if l.strip()]
+        stat_lines = [line for line in stat_out.split("\n") if line.strip()]
 
         # If too many files or stat timed out, just return stats
         if len(stat_lines) > 50 or "timed out" in stat_err.lower():
             return f"Large commit - showing stats only:\n\n{stat_out}"
 
         # Try to get full diff with timeout
-        stdout, stderr, code = await self._run_git(
-            "show", sha, "--format=", timeout=15.0
-        )
+        stdout, stderr, code = await self._run_git("show", sha, "--format=", timeout=15.0)
 
         if code != 0:
             if "timed out" in stderr.lower():

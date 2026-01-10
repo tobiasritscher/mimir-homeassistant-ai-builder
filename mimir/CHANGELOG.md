@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.19] - 2025-01-10
+
+### Added
+
+- **Commit button** on Git history page
+  - "Commit All" button appears when there are uncommitted changes
+  - Auto-generates meaningful commit messages based on what changed:
+    - Categorizes changes (automations, scripts, core config, other)
+    - Shows action type (Add/Update/Remove)
+    - Includes file count
+  - Shows commit result with message used
+  - Automatically refreshes commits list after successful commit
+
 ## [0.1.18] - 2025-01-10
 
 ### Fixed

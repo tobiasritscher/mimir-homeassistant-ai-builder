@@ -42,6 +42,7 @@ def setup_routes(app: web.Application) -> None:
     app.router.add_get("/api/git/status", handle_git_status)
     app.router.add_get("/api/git/commits", handle_git_commits)
     app.router.add_get("/api/git/diff/{sha}", handle_git_diff)
+    app.router.add_post("/api/git/commit", handle_git_commit)
     app.router.add_post("/api/git/rollback", handle_git_rollback)
     app.router.add_get("/api/git/branches", handle_git_branches)
     app.router.add_post("/api/git/branches", handle_git_create_branch)
@@ -273,6 +274,34 @@ async def handle_git_diff(request: web.Request) -> web.Response:
         return web.json_response({"diff": diff})
     except Exception as e:
         logger.exception("Git diff error: %s", e)
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def handle_git_commit(request: web.Request) -> web.Response:
+    """Handle POST /api/git/commit - Commit all changes with auto-generated message."""
+    git: GitManager | None = request.app.get("git")
+
+    if not git:
+        return web.json_response({"error": "Git not enabled"}, status=503)
+
+    try:
+        result = await git.commit_all()
+
+        if result.get("status") == "no_changes":
+            return web.json_response({"status": "no_changes", "message": "No changes to commit"})
+
+        if result.get("status") == "error":
+            return web.json_response({"error": result.get("error", "Commit failed")}, status=500)
+
+        return web.json_response(
+            {
+                "status": "ok",
+                "message": result.get("message", ""),
+                "commit": result.get("commit", {}),
+            }
+        )
+    except Exception as e:
+        logger.exception("Git commit error: %s", e)
         return web.json_response({"error": str(e)}, status=500)
 
 

@@ -1084,10 +1084,42 @@ GIT_HTML = (
                     statusBar.innerHTML = '<span class="status-icon">&#10003;</span><span class="status-text">Working directory clean - all changes committed</span>';
                 }} else {{
                     statusBar.className = 'status-bar dirty';
-                    statusBar.innerHTML = `<span class="status-icon">&#9888;</span><span class="status-text">${{data.changed_files || 0}} file(s) with uncommitted changes</span>`;
+                    statusBar.innerHTML = `<span class="status-icon">&#9888;</span><span class="status-text">${{data.changed_files || 0}} file(s) with uncommitted changes</span><button class="btn btn-primary" onclick="commitChanges()" style="margin-left: auto;">&#128190; Commit All</button>`;
                 }}
             }} catch (error) {{
                 document.getElementById('statusBar').innerHTML = '<span class="status-icon">&#10060;</span><span class="status-text">Failed to load status</span>';
+            }}
+        }}
+
+        async function commitChanges() {{
+            const statusBar = document.getElementById('statusBar');
+            statusBar.innerHTML = '<span class="status-icon"><div class="spinner"></div></span><span class="status-text">Committing changes...</span>';
+
+            try {{
+                const response = await fetch('/api/git/commit', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }}
+                }});
+                const data = await response.json();
+
+                if (data.status === 'ok') {{
+                    statusBar.className = 'status-bar clean';
+                    statusBar.innerHTML = `<span class="status-icon">&#10003;</span><span class="status-text">Committed: ${{escapeHtml(data.message)}}</span>`;
+                    loadCommits();  // Refresh commits list
+                }} else if (data.status === 'no_changes') {{
+                    statusBar.className = 'status-bar clean';
+                    statusBar.innerHTML = '<span class="status-icon">&#10003;</span><span class="status-text">No changes to commit</span>';
+                }} else {{
+                    statusBar.className = 'status-bar dirty';
+                    statusBar.innerHTML = `<span class="status-icon">&#10060;</span><span class="status-text">Commit failed: ${{escapeHtml(data.error || 'Unknown error')}}</span>`;
+                }}
+
+                // Reload status after a brief delay
+                setTimeout(loadStatus, 2000);
+            }} catch (error) {{
+                statusBar.className = 'status-bar dirty';
+                statusBar.innerHTML = '<span class="status-icon">&#10060;</span><span class="status-text">Failed to commit: ' + error.message + '</span>';
+                setTimeout(loadStatus, 2000);
             }}
         }}
 
