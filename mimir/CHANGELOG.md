@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2025-01-10
+
+### Added
+
+- Web status interface on port 5000
+- Health check endpoint at /health
+- HA connection retry logic (5 attempts)
+
+### Fixed
+
+- App no longer exits if HA connection fails initially
+
 ## [0.1.1] - 2025-01-10
 
 ### Fixed
