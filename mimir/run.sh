@@ -31,8 +31,40 @@ echo "LLM Provider: ${MIMIR_LLM_PROVIDER}"
 echo "LLM Model: ${MIMIR_LLM_MODEL}"
 echo "Operating Mode: ${MIMIR_OPERATING_MODE}"
 echo "Telegram Owner ID: ${MIMIR_TELEGRAM_OWNER_ID}"
-echo "SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:+[SET]}"
-echo "SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:-[NOT SET]}"
+
+# Debug: Check all possible token sources
+echo ""
+echo "=== Token Debug ==="
+if [ -n "$SUPERVISOR_TOKEN" ]; then
+    echo "SUPERVISOR_TOKEN env: [SET - ${#SUPERVISOR_TOKEN} chars]"
+else
+    echo "SUPERVISOR_TOKEN env: [NOT SET]"
+fi
+
+if [ -n "$HASSIO_TOKEN" ]; then
+    echo "HASSIO_TOKEN env: [SET - ${#HASSIO_TOKEN} chars]"
+    export SUPERVISOR_TOKEN="$HASSIO_TOKEN"
+else
+    echo "HASSIO_TOKEN env: [NOT SET]"
+fi
+
+# Check S6 environment files
+if [ -f /run/s6/container_environment/SUPERVISOR_TOKEN ]; then
+    echo "S6 file exists: /run/s6/container_environment/SUPERVISOR_TOKEN"
+    export SUPERVISOR_TOKEN=$(cat /run/s6/container_environment/SUPERVISOR_TOKEN)
+    echo "Loaded from S6 file"
+elif [ -f /var/run/s6/container_environment/SUPERVISOR_TOKEN ]; then
+    echo "S6 file exists: /var/run/s6/container_environment/SUPERVISOR_TOKEN"
+    export SUPERVISOR_TOKEN=$(cat /var/run/s6/container_environment/SUPERVISOR_TOKEN)
+    echo "Loaded from S6 file (var)"
+fi
+
+# List all environment variables containing TOKEN or HASSIO
+echo ""
+echo "=== Related env vars ==="
+env | grep -iE "(token|hassio|supervisor)" || echo "No matching env vars found"
+echo "========================"
+echo ""
 
 mkdir -p /data/mimir
 

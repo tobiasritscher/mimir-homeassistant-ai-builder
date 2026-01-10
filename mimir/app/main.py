@@ -126,7 +126,7 @@ STATUS_HTML = """<!DOCTYPE html>
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.7"
+    VERSION = "0.1.8"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
