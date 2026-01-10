@@ -1,44 +1,44 @@
 """HTML templates for Mímir web interface."""
 
-# Shared CSS styles
+# Shared CSS styles (braces doubled for .format() compatibility)
 SHARED_STYLES = """
-    * {
+    * {{
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-    }
-    body {
+    }}
+    body {{
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         color: #e2e8f0;
         min-height: 100vh;
         line-height: 1.6;
-    }
-    .container {
+    }}
+    .container {{
         max-width: 1000px;
         margin: 0 auto;
         padding: 30px 20px;
-    }
-    .header {
+    }}
+    .header {{
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 20px;
         border-bottom: 2px solid rgba(99, 102, 241, 0.3);
-    }
-    .header h1 {
+    }}
+    .header h1 {{
         color: #818cf8;
         font-size: 28px;
         font-weight: 600;
         display: flex;
         align-items: center;
         gap: 12px;
-    }
-    .header-icon {
+    }}
+    .header-icon {{
         font-size: 32px;
-    }
-    .back-link {
+    }}
+    .back-link {{
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -49,20 +49,20 @@ SHARED_STYLES = """
         text-decoration: none;
         font-size: 14px;
         transition: all 0.2s;
-    }
-    .back-link:hover {
+    }}
+    .back-link:hover {{
         background: rgba(99, 102, 241, 0.3);
         color: #c7d2fe;
-    }
-    .card {
+    }}
+    .card {{
         background: rgba(30, 41, 59, 0.8);
         border: 1px solid rgba(99, 102, 241, 0.2);
         border-radius: 16px;
         padding: 24px;
         margin-bottom: 24px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-    .card h2 {
+    }}
+    .card h2 {{
         color: #a5b4fc;
         font-size: 18px;
         font-weight: 600;
@@ -70,8 +70,8 @@ SHARED_STYLES = """
         display: flex;
         align-items: center;
         gap: 10px;
-    }
-    .btn {
+    }}
+    .btn {{
         padding: 10px 20px;
         border: none;
         border-radius: 8px;
@@ -82,39 +82,39 @@ SHARED_STYLES = """
         display: inline-flex;
         align-items: center;
         gap: 8px;
-    }
-    .btn-primary {
+    }}
+    .btn-primary {{
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: white;
-    }
-    .btn-primary:hover {
+    }}
+    .btn-primary:hover {{
         background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
         transform: translateY(-1px);
-    }
-    .btn-secondary {
+    }}
+    .btn-secondary {{
         background: rgba(99, 102, 241, 0.2);
         color: #a5b4fc;
-    }
-    .btn-secondary:hover {
+    }}
+    .btn-secondary:hover {{
         background: rgba(99, 102, 241, 0.3);
-    }
-    .btn-danger {
+    }}
+    .btn-danger {{
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: white;
-    }
-    .btn-danger:hover {
+    }}
+    .btn-danger:hover {{
         background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    }
-    .btn-sm {
+    }}
+    .btn-sm {{
         padding: 6px 12px;
         font-size: 12px;
-    }
-    .btn:disabled {
+    }}
+    .btn:disabled {{
         opacity: 0.5;
         cursor: not-allowed;
         transform: none;
-    }
-    .input {
+    }}
+    .input {{
         padding: 12px 16px;
         border: 1px solid rgba(99, 102, 241, 0.3);
         border-radius: 8px;
@@ -122,16 +122,16 @@ SHARED_STYLES = """
         color: #e2e8f0;
         font-size: 14px;
         transition: all 0.2s;
-    }
-    .input:focus {
+    }}
+    .input:focus {{
         outline: none;
         border-color: #6366f1;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-    }
-    .input::placeholder {
+    }}
+    .input::placeholder {{
         color: #64748b;
-    }
-    .select {
+    }}
+    .select {{
         padding: 12px 16px;
         border: 1px solid rgba(99, 102, 241, 0.3);
         border-radius: 8px;
@@ -145,26 +145,26 @@ SHARED_STYLES = """
         background-position: right 12px center;
         background-size: 16px;
         padding-right: 40px;
-    }
-    .select:focus {
+    }}
+    .select:focus {{
         outline: none;
         border-color: #6366f1;
-    }
-    .badge {
+    }}
+    .badge {{
         padding: 4px 10px;
         border-radius: 20px;
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-    }
-    .badge-telegram { background: rgba(0, 136, 204, 0.2); color: #38bdf8; }
-    .badge-web { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
-    .badge-user { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-    .badge-assistant { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-    .badge-tool { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-    .badge-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-    .modal-overlay {
+    }}
+    .badge-telegram {{ background: rgba(0, 136, 204, 0.2); color: #38bdf8; }}
+    .badge-web {{ background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }}
+    .badge-user {{ background: rgba(34, 197, 94, 0.2); color: #4ade80; }}
+    .badge-assistant {{ background: rgba(245, 158, 11, 0.2); color: #fbbf24; }}
+    .badge-tool {{ background: rgba(239, 68, 68, 0.2); color: #f87171; }}
+    .badge-error {{ background: rgba(239, 68, 68, 0.2); color: #f87171; }}
+    .modal-overlay {{
         display: none;
         position: fixed;
         top: 0;
@@ -177,11 +177,11 @@ SHARED_STYLES = """
         align-items: center;
         justify-content: center;
         padding: 20px;
-    }
-    .modal-overlay.visible {
+    }}
+    .modal-overlay.visible {{
         display: flex;
-    }
-    .modal {
+    }}
+    .modal {{
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         border: 1px solid rgba(99, 102, 241, 0.3);
         border-radius: 16px;
@@ -189,54 +189,54 @@ SHARED_STYLES = """
         max-width: 450px;
         width: 100%;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    }
-    .modal h3 {
+    }}
+    .modal h3 {{
         color: #e2e8f0;
         font-size: 20px;
         margin-bottom: 16px;
         display: flex;
         align-items: center;
         gap: 10px;
-    }
-    .modal p {
+    }}
+    .modal p {{
         color: #94a3b8;
         margin-bottom: 12px;
-    }
-    .modal-buttons {
+    }}
+    .modal-buttons {{
         display: flex;
         gap: 12px;
         justify-content: flex-end;
         margin-top: 24px;
-    }
-    .empty-state {
+    }}
+    .empty-state {{
         text-align: center;
         padding: 60px 20px;
         color: #64748b;
-    }
-    .empty-state-icon {
+    }}
+    .empty-state-icon {{
         font-size: 48px;
         margin-bottom: 16px;
         opacity: 0.5;
-    }
-    .loading {
+    }}
+    .loading {{
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
         color: #64748b;
         padding: 40px;
-    }
-    .spinner {
+    }}
+    .spinner {{
         width: 20px;
         height: 20px;
         border: 2px solid rgba(99, 102, 241, 0.3);
         border-top-color: #6366f1;
         border-radius: 50%;
         animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
+    }}
+    @keyframes spin {{
+        to {{ transform: rotate(360deg); }}
+    }}
 """
 
 # Main status page with chat interface

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.14] - 2025-01-10
+
+### Fixed
+
+- Fix dashboard crash caused by CSS brace escaping issue
+  - Python's `.format()` method was interpreting CSS `{}` as format placeholders
+  - All CSS braces in SHARED_STYLES now properly doubled for escaping
+
 ## [0.1.13] - 2025-01-10
 
 ### Changed
