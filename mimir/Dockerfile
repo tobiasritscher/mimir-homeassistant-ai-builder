@@ -39,6 +39,3 @@ RUN chmod a+x /run.sh
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-
-# Run the application
-CMD ["/run.sh"]
