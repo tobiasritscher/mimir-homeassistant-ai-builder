@@ -502,27 +502,43 @@ class GetAutomationConfigTool(BaseTool):
         return {
             "type": "object",
             "properties": {
-                "automation_id": {
+                "entity_id": {
                     "type": "string",
-                    "description": "The automation entity ID (e.g., 'automation.motion_lights' or just 'motion_lights').",
+                    "description": "The automation entity ID (e.g., 'automation.motion_lights').",
                 },
             },
-            "required": ["automation_id"],
+            "required": ["entity_id"],
         }
 
     async def execute(self, **kwargs: Any) -> str:
-        automation_id = kwargs.get("automation_id", "")
+        entity_id = kwargs.get("entity_id", "")
 
-        if not automation_id:
-            return "Error: automation_id is required."
+        if not entity_id:
+            return "Error: entity_id is required."
+
+        # Ensure full entity_id format
+        if not entity_id.startswith("automation."):
+            entity_id = f"automation.{entity_id}"
 
         try:
-            config = await self._ha_api.get_automation_config(automation_id)
+            # First get the entity state to find the internal 'id' attribute
+            state = await self._ha_api.get_state(entity_id)
+            internal_id = state.attributes.get("id")
+
+            if not internal_id:
+                return (
+                    f"Error: Automation '{entity_id}' does not have an internal ID. "
+                    "This usually means it was created via YAML files instead of the UI. "
+                    "Only UI-created automations can be retrieved through this API."
+                )
+
+            # Now get the config using the internal ID
+            config = await self._ha_api.get_automation_config(internal_id)
 
             # Format as YAML for readability
             yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
-            return f"Automation configuration for '{automation_id}':\n\n```yaml\n{yaml_output}```"
+            return f"Automation configuration for '{entity_id}' (internal ID: {internal_id}):\n\n```yaml\n{yaml_output}```"
 
         except Exception as e:
             logger.exception("Failed to get automation config: %s", e)
@@ -645,36 +661,52 @@ class UpdateAutomationTool(BaseTool):
         return {
             "type": "object",
             "properties": {
-                "automation_id": {
+                "entity_id": {
                     "type": "string",
-                    "description": "The automation ID to update (e.g., 'motion_lights').",
+                    "description": "The automation entity ID to update (e.g., 'automation.motion_lights').",
                 },
                 "config": {
                     "type": "object",
                     "description": "Full automation configuration (alias, trigger, condition, action, mode).",
                 },
             },
-            "required": ["automation_id", "config"],
+            "required": ["entity_id", "config"],
         }
 
     async def execute(self, **kwargs: Any) -> str:
-        automation_id = kwargs.get("automation_id", "")
+        entity_id = kwargs.get("entity_id", "")
         config = kwargs.get("config", {})
 
-        if not automation_id or not config:
-            return "Error: automation_id and config are required."
+        if not entity_id or not config:
+            return "Error: entity_id and config are required."
+
+        # Ensure full entity_id format
+        if not entity_id.startswith("automation."):
+            entity_id = f"automation.{entity_id}"
 
         if "alias" not in config or "trigger" not in config or "action" not in config:
             return "Error: config must include at least 'alias', 'trigger', and 'action'."
 
         try:
-            await self._ha_api.create_automation(automation_id, config)
+            # First get the entity state to find the internal 'id' attribute
+            state = await self._ha_api.get_state(entity_id)
+            internal_id = state.attributes.get("id")
+
+            if not internal_id:
+                return (
+                    f"Error: Automation '{entity_id}' does not have an internal ID. "
+                    "This usually means it was created via YAML files instead of the UI. "
+                    "Only UI-created automations can be updated through this API."
+                )
+
+            # Update using the internal ID
+            await self._ha_api.create_automation(internal_id, config)
 
             # Reload automations to apply changes
             await self._ha_api.call_service("automation", "reload")
 
             yaml_output = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
-            return f"Automation 'automation.{automation_id}' updated successfully!\n\n```yaml\n{yaml_output}```"
+            return f"Automation '{entity_id}' updated successfully!\n\n```yaml\n{yaml_output}```"
 
         except Exception as e:
             logger.exception("Failed to update automation: %s", e)
@@ -703,27 +735,43 @@ class DeleteAutomationTool(BaseTool):
         return {
             "type": "object",
             "properties": {
-                "automation_id": {
+                "entity_id": {
                     "type": "string",
-                    "description": "The automation ID to delete (e.g., 'motion_lights').",
+                    "description": "The automation entity ID to delete (e.g., 'automation.motion_lights').",
                 },
             },
-            "required": ["automation_id"],
+            "required": ["entity_id"],
         }
 
     async def execute(self, **kwargs: Any) -> str:
-        automation_id = kwargs.get("automation_id", "")
+        entity_id = kwargs.get("entity_id", "")
 
-        if not automation_id:
-            return "Error: automation_id is required."
+        if not entity_id:
+            return "Error: entity_id is required."
+
+        # Ensure full entity_id format
+        if not entity_id.startswith("automation."):
+            entity_id = f"automation.{entity_id}"
 
         try:
-            await self._ha_api.delete_automation(automation_id)
+            # First get the entity state to find the internal 'id' attribute
+            state = await self._ha_api.get_state(entity_id)
+            internal_id = state.attributes.get("id")
+
+            if not internal_id:
+                return (
+                    f"Error: Automation '{entity_id}' does not have an internal ID. "
+                    "This usually means it was created via YAML files instead of the UI. "
+                    "Only UI-created automations can be deleted through this API."
+                )
+
+            # Delete using the internal ID
+            await self._ha_api.delete_automation(internal_id)
 
             # Reload automations to apply changes
             await self._ha_api.call_service("automation", "reload")
 
-            return f"Automation 'automation.{automation_id}' deleted successfully."
+            return f"Automation '{entity_id}' deleted successfully."
 
         except Exception as e:
             logger.exception("Failed to delete automation: %s", e)

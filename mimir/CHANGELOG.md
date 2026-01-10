@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11] - 2025-01-10
+
+### Fixed
+
+- Automation CRUD tools now correctly use the internal `id` attribute from entity state
+  - Previously used entity_id slug which doesn't match the API endpoint requirement
+  - Now first fetches entity state to get the internal ID, then uses that for config API
+- All automation tools use consistent `entity_id` parameter naming
+
+### Added
+
+- Language matching: Mímir now responds in the same language as the user's message
+  - German questions get German answers, English questions get English answers, etc.
+
 ## [0.1.10] - 2025-01-10
 
 ### Added
