@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2025-01-10
+
+### Fixed
+
+- Fix Python relative import error by restructuring to /opt/mimir/app/
+- Run as module (python -m app.main) instead of script
+
 ## [0.1.3] - 2025-01-10
 
 ### Fixed

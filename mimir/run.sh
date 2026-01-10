@@ -43,6 +43,7 @@ echo "Telegram Owner ID: ${MIMIR_TELEGRAM_OWNER_ID}"
 # Create data directories
 mkdir -p /data/mimir
 
-# Run the application
+# Run the application as a module
 echo "Starting Python application..."
-exec python3 /app/main.py
+cd /opt/mimir
+exec python3 -m app.main

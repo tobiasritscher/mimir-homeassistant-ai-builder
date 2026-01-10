@@ -6,7 +6,7 @@ FROM ${BUILD_FROM}
 LABEL \
     io.hass.name="Mímir" \
     io.hass.description="Intelligent Home Assistant agent with Nordic wisdom" \
-    io.hass.version="0.1.3" \
+    io.hass.version="0.1.4" \
     io.hass.type="addon" \
     io.hass.arch="amd64|aarch64|armv7"
 
@@ -23,16 +23,16 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Set working directory
-WORKDIR /app
+WORKDIR /opt/mimir
 
 # Copy requirements first for better caching
-COPY requirements.txt /app/
+COPY requirements.txt /opt/mimir/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY app/ /app/
+# Copy application code as a package
+COPY app/ /opt/mimir/app/
 
 # Copy startup script
 COPY run.sh /
