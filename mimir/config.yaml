@@ -9,7 +9,6 @@ arch:
   - armv7
 startup: application
 boot: auto
-init: false
 hassio_api: true
 homeassistant_api: true
 auth_api: true
