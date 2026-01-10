@@ -91,17 +91,20 @@ async def handle_health(request: web.Request) -> web.Response:
 
 async def handle_audit_page(_request: web.Request) -> web.Response:
     """Handle GET /audit - Audit log page."""
-    return web.Response(text=AUDIT_HTML, content_type="text/html")
+    # Call .format() to convert doubled braces {{}} to single braces {}
+    return web.Response(text=AUDIT_HTML.format(), content_type="text/html")
 
 
 async def handle_git_page(_request: web.Request) -> web.Response:
     """Handle GET /git - Git history page."""
-    return web.Response(text=GIT_HTML, content_type="text/html")
+    # Call .format() to convert doubled braces {{}} to single braces {}
+    return web.Response(text=GIT_HTML.format(), content_type="text/html")
 
 
 async def handle_chat_page(_request: web.Request) -> web.Response:
     """Handle GET /chat - Simplified chat-only page."""
-    return web.Response(text=CHAT_HTML, content_type="text/html")
+    # Call .format() to convert doubled braces {{}} to single braces {}
+    return web.Response(text=CHAT_HTML.format(), content_type="text/html")
 
 
 # ============== Chat API ==============

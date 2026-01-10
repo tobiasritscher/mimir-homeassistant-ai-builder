@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.16] - 2025-01-10
+
+### Fixed
+
+- Fix CSS not rendering on Audit, Git, and Chat pages
+  - Templates with shared CSS used doubled braces `{{}}` for `.format()` compatibility
+  - Pages not using `.format()` were serving invalid CSS with literal `{{` braces
+  - Now all page handlers call `.format()` to convert braces properly
+
 ## [0.1.15] - 2025-01-10
 
 ### Added
