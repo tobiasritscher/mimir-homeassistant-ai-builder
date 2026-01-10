@@ -1,5 +1,8 @@
-#!/usr/bin/with-contenv bash
-set -e
+#!/command/with-contenv bash
+# shellcheck shell=bash
+# ==============================================================================
+# Mímir Service
+# ==============================================================================
 
 # Configuration file path
 CONFIG_PATH=/data/options.json
@@ -45,17 +48,12 @@ if [ -n "$SUPERVISOR_TOKEN" ]; then
     echo "SUPERVISOR_TOKEN: [SET]"
 else
     echo "SUPERVISOR_TOKEN: [NOT SET]"
-    # Try to read from S6 environment file if it exists
-    if [ -f /run/s6/container_environment/SUPERVISOR_TOKEN ]; then
-        export SUPERVISOR_TOKEN=$(cat /run/s6/container_environment/SUPERVISOR_TOKEN)
-        echo "SUPERVISOR_TOKEN: [Loaded from S6 file]"
-    fi
 fi
 
 # Create data directories
 mkdir -p /data/mimir
 
-# Run the application as a module
+# Run the application
 echo "Starting Python application..."
 cd /opt/mimir
 exec python3 -m app.main

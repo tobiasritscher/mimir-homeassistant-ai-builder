@@ -6,7 +6,7 @@ FROM ${BUILD_FROM}
 LABEL \
     io.hass.name="Mímir" \
     io.hass.description="Intelligent Home Assistant agent with Nordic wisdom" \
-    io.hass.version="0.1.5" \
+    io.hass.version="0.1.6" \
     io.hass.type="addon" \
     io.hass.arch="amd64|aarch64|armv7"
 
@@ -19,7 +19,6 @@ RUN apk add --no-cache \
     openssl-dev \
     cargo \
     jq \
-    bash \
     && rm -rf /var/cache/apk/*
 
 # Set working directory
@@ -34,9 +33,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code as a package
 COPY app/ /opt/mimir/app/
 
-# Copy startup script
-COPY run.sh /
-RUN chmod a+x /run.sh
+# Copy S6 overlay service configuration
+COPY rootfs/ /
+
+# Make service scripts executable
+RUN chmod a+x /etc/s6-overlay/s6-rc.d/mimir/run \
+    && chmod a+x /etc/s6-overlay/s6-rc.d/mimir/finish
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

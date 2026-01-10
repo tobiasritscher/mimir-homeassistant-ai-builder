@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2025-01-10
+
+### Changed
+
+- Update base images to Python 3.12 / Alpine 3.20
+- Use proper S6 overlay v3 service structure instead of legacy /run.sh
+- Add finish script for graceful shutdown handling
+
 ## [0.1.5] - 2025-01-10
 
 ### Fixed
