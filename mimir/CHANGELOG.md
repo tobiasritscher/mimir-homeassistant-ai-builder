@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.31] - 2025-01-11
+
+### Changed
+
+- **Simplified chat page** for better ingress compatibility
+  - Inline HTML instead of template (eliminates format() issues)
+  - Added `/debug` endpoint for diagnosing ingress problems
+  - Request logging now at INFO level (always visible in logs)
+
 ## [0.1.30] - 2025-01-11
 
 ### Added
