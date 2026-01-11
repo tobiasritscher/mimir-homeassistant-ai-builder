@@ -21,9 +21,7 @@ Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
 
 
 @web.middleware
-async def request_logger_middleware(
-    request: web.Request, handler: Handler
-) -> web.StreamResponse:
+async def request_logger_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
     """Log all incoming requests for debugging."""
     logger.debug(
         "Request: %s %s (headers: %s)",
