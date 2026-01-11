@@ -75,8 +75,11 @@ def setup_routes(app: web.Application) -> None:
     router = app.router
 
     # Main pages (with trailing slash variants)
-    add_route_with_trailing_slash(router, "GET", "/", handle_status)
-    add_route_with_trailing_slash(router, "GET", "/chat", handle_chat_page)
+    # Chat is the default view - simplest for ingress and most useful for users
+    add_route_with_trailing_slash(router, "GET", "/", handle_chat_page)
+    # Also handle // explicitly for ingress double-slash issue
+    router.add_get("//", handle_chat_page)
+    add_route_with_trailing_slash(router, "GET", "/status", handle_status)
     add_route_with_trailing_slash(router, "GET", "/health", handle_health)
     add_route_with_trailing_slash(router, "GET", "/audit", handle_audit_page)
     add_route_with_trailing_slash(router, "GET", "/git", handle_git_page)
@@ -88,12 +91,16 @@ def setup_routes(app: web.Application) -> None:
 
     # Audit API (with trailing slash variants)
     add_route_with_trailing_slash(router, "GET", "/api/audit", handle_audit_list)
-    router.add_get("/api/audit/{id}", handle_audit_detail)  # Dynamic routes don't need slash variant
+    router.add_get(
+        "/api/audit/{id}", handle_audit_detail
+    )  # Dynamic routes don't need slash variant
 
     # Git API (with trailing slash variants)
     add_route_with_trailing_slash(router, "GET", "/api/git/status", handle_git_status)
     add_route_with_trailing_slash(router, "GET", "/api/git/commits", handle_git_commits)
-    router.add_get("/api/git/diff/{sha}", handle_git_diff)  # Dynamic routes don't need slash variant
+    router.add_get(
+        "/api/git/diff/{sha}", handle_git_diff
+    )  # Dynamic routes don't need slash variant
     add_route_with_trailing_slash(router, "POST", "/api/git/commit", handle_git_commit)
     add_route_with_trailing_slash(router, "POST", "/api/git/rollback", handle_git_rollback)
     add_route_with_trailing_slash(router, "GET", "/api/git/branches", handle_git_branches)

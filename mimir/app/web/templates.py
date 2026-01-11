@@ -5,7 +5,8 @@ from __future__ import annotations
 import os
 
 try:
-    from importlib.metadata import PackageNotFoundError, version as pkg_version
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as pkg_version
 except Exception:  # pragma: no cover
     PackageNotFoundError = Exception
     pkg_version = None
@@ -507,9 +508,9 @@ STATUS_HTML = (
         </div>
 
         <div class="nav-links">
-            <a href="chat" class="nav-link">
+            <a href="." class="nav-link">
                 <span class="nav-icon">&#128172;</span>
-                Chat Only
+                Back to Chat
             </a>
             <a href="audit" class="nav-link">
                 <span class="nav-icon">&#128220;</span>
@@ -1543,7 +1544,9 @@ CHAT_HTML = (
         <div class="chat-header">
             <h1>&#129704; Mimir</h1>
             <div class="header-actions">
-                <a href="." class="btn btn-secondary">&#128202; Dashboard</a>
+                <a href="status" class="btn btn-secondary">&#128202; Status</a>
+                <a href="audit" class="btn btn-secondary">&#128220; Audit</a>
+                <a href="git" class="btn btn-secondary">&#128230; Git</a>
             </div>
         </div>
 

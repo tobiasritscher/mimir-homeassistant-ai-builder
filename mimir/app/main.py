@@ -49,7 +49,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.28"
+    VERSION = "0.1.29"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -213,9 +213,7 @@ class MimirAgent:
 
     async def _start_web_server(self) -> None:
         """Start the web server."""
-        self._web_app = web.Application(
-            middlewares=[request_logger_middleware]
-        )
+        self._web_app = web.Application(middlewares=[request_logger_middleware])
 
         # Store references for handlers
         self._web_app["agent"] = self

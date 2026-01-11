@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.29] - 2025-01-11
+
+### Changed
+
+- **Chat is now the default view** for ingress panel
+  - Fixes ingress double-slash path issue (`//`) that caused HA dashboard to show
+  - Status/dashboard page moved to `/status`
+  - Navigation links updated across all pages
+  - Explicit `//` route handler added as fallback
+
 ## [0.1.28] - 2025-01-11
 
 ### Fixed
