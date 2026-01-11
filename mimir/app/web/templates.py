@@ -3,13 +3,23 @@
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+# Try to import from importlib.metadata, fall back for older Python
+_pkg_version: Callable[[str], str] | None = None
+_PackageNotFoundError: type[Exception] = Exception
 
 try:
-    from importlib.metadata import PackageNotFoundError
-    from importlib.metadata import version as pkg_version
+    from importlib.metadata import PackageNotFoundError as _PNF
+    from importlib.metadata import version as _pv
+
+    _PackageNotFoundError = _PNF
+    _pkg_version = _pv
 except Exception:  # pragma: no cover
-    PackageNotFoundError = Exception
-    pkg_version = None
+    pass
 
 
 def _get_app_version() -> str:
@@ -18,12 +28,12 @@ def _get_app_version() -> str:
     if env_version:
         return env_version
 
-    if pkg_version is None:
+    if _pkg_version is None:
         return "unknown"
 
     try:
-        return pkg_version("mimir")
-    except PackageNotFoundError:
+        return _pkg_version("mimir")
+    except _PackageNotFoundError:
         return "unknown"
 
 

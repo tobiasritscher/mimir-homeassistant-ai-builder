@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.34] - 2025-01-11
+
+### Fixed
+
+- Fix mypy type errors in templates.py
+
 ## [0.1.33] - 2025-01-11
 
 ### Fixed
