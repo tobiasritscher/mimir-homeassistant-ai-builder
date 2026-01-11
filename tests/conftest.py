@@ -188,3 +188,66 @@ def sample_response() -> Response:
         usage=Usage(input_tokens=10, output_tokens=15),
         model="claude-sonnet-4-20250514",
     )
+
+
+class MockAuditLogEntry:
+    """Mock audit log entry for testing."""
+
+    def __init__(
+        self,
+        id: int,
+        timestamp: str,
+        source: str,
+        message_type: str,
+        content: str,
+        user_id: str | None = None,
+        session_id: str | None = None,
+    ) -> None:
+        self.id = id
+        self.timestamp = timestamp
+        self.source = source
+        self.message_type = message_type
+        self.content = content
+        self.user_id = user_id
+        self.session_id = session_id
+
+
+class MockAuditRepository:
+    """Mock audit repository for testing."""
+
+    def __init__(self, logs: list[MockAuditLogEntry] | None = None) -> None:
+        self._logs = logs or []
+
+    async def get_recent_logs(
+        self,
+        limit: int = 50,
+        offset: int = 0,  # noqa: ARG002
+        source: str | None = None,  # noqa: ARG002
+        message_type: str | None = None,  # noqa: ARG002
+    ) -> list[MockAuditLogEntry]:
+        """Return mock logs in DESC order (newest first)."""
+        return self._logs[:limit]
+
+    async def log_message(
+        self,
+        source: str,
+        message_type: str,
+        content: str,
+        user_id: str | None = None,
+        session_id: str | None = None,  # noqa: ARG002
+        metadata: dict[str, Any] | None = None,  # noqa: ARG002
+    ) -> int:
+        """Mock log message."""
+        new_id = len(self._logs) + 1
+        self._logs.insert(
+            0,
+            MockAuditLogEntry(
+                id=new_id,
+                timestamp="2025-01-11T12:00:00",
+                source=source,
+                message_type=message_type,
+                content=content,
+                user_id=user_id,
+            ),
+        )
+        return new_id

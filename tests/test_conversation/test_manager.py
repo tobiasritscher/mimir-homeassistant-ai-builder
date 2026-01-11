@@ -9,7 +9,7 @@ from mimir.app.conversation.manager import ConversationManager
 from mimir.app.llm.types import Response, StopReason, ToolCall, Usage
 from mimir.app.tools.registry import ToolRegistry
 
-from ..conftest import MockLLMProvider, MockTool
+from ..conftest import MockAuditLogEntry, MockAuditRepository, MockLLMProvider, MockTool
 
 
 class TestConversationManager:
@@ -96,3 +96,72 @@ class TestConversationManager:
 
         assert "Operating mode: normal" in summary
         assert "mock_tool" in summary
+
+    @pytest.mark.asyncio
+    async def test_load_history_from_audit(self) -> None:
+        """Test loading conversation history from audit database."""
+        # Create mock audit logs (newest first, like the real DB returns)
+        mock_logs = [
+            MockAuditLogEntry(
+                id=4,
+                timestamp="2025-01-11T12:03:00",
+                source="telegram",
+                message_type="assistant",
+                content="Der Schalter heißt switch.stecker_tv_station",
+            ),
+            MockAuditLogEntry(
+                id=3,
+                timestamp="2025-01-11T12:02:00",
+                source="telegram",
+                message_type="user",
+                content="Welcher Schalter steuert die Lautsprecher?",
+            ),
+            MockAuditLogEntry(
+                id=2,
+                timestamp="2025-01-11T12:01:00",
+                source="telegram",
+                message_type="assistant",
+                content="Hallo! Wie kann ich helfen?",
+            ),
+            MockAuditLogEntry(
+                id=1,
+                timestamp="2025-01-11T12:00:00",
+                source="telegram",
+                message_type="user",
+                content="Hallo Mimir",
+            ),
+        ]
+
+        audit = MockAuditRepository(logs=mock_logs)
+        llm = MockLLMProvider()
+        registry = ToolRegistry()
+
+        manager = ConversationManager(
+            llm=llm,
+            tool_registry=registry,
+            operating_mode=OperatingMode.NORMAL,
+            audit_repository=audit,  # type: ignore[arg-type]
+        )
+
+        # Load history
+        loaded = await manager.load_history_from_audit(limit=10)
+
+        assert loaded == 4
+        history = manager.get_history()
+        assert len(history) == 4
+
+        # Check order is chronological (oldest first)
+        assert history[0]["role"] == "user"
+        assert history[0]["content"] == "Hallo Mimir"
+        assert history[1]["role"] == "assistant"
+        assert history[1]["content"] == "Hallo! Wie kann ich helfen?"
+        assert history[2]["role"] == "user"
+        assert "Lautsprecher" in history[2]["content"]
+        assert history[3]["role"] == "assistant"
+        assert "switch.stecker_tv_station" in history[3]["content"]
+
+    @pytest.mark.asyncio
+    async def test_load_history_without_audit(self, manager: ConversationManager) -> None:
+        """Test that load_history returns 0 when no audit repository."""
+        loaded = await manager.load_history_from_audit()
+        assert loaded == 0
