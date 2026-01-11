@@ -11,6 +11,75 @@ from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Default .gitignore for Home Assistant config directory
+HA_GITIGNORE = """# ===========================================
+# Home Assistant .gitignore (managed by Mímir)
+# ===========================================
+
+# ============ Security Sensitive ============
+# NEVER commit these - they contain secrets/tokens
+.storage/auth
+.storage/auth_provider.*
+.storage/onboarding
+.cloud/
+secrets.yaml
+*.pem
+*.key
+*.crt
+*.p12
+
+# ============ Databases ============
+*.db
+*.db-shm
+*.db-wal
+home-assistant_v2.db*
+
+# ============ Logs ============
+*.log
+home-assistant.log*
+
+# ============ Frequently Changing (Noise) ============
+# These change constantly and clutter git history
+.storage/bluetooth.*
+.storage/backup
+.storage/core.restore_state*
+.storage/browser_mod*
+.storage/hacs*
+.storage/http*
+.storage/image.*
+.storage/lovelace*
+.storage/mobile_app*
+.storage/person
+.storage/trace*
+.storage/recorder*
+.storage/energy*
+.storage/assist_pipeline*
+.storage/conversation*
+
+# ============ Cache & Temp ============
+__pycache__/
+*.py[cod]
+.HA_VERSION
+*.pickle
+tts/
+.ruff_cache/
+deps/
+backups/
+tmp/
+*.tmp
+
+# ============ IDE/Editor ============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============ OS Generated ============
+.DS_Store
+Thumbs.db
+"""
+
 
 @dataclass
 class GitConfig:
@@ -72,6 +141,44 @@ class GitManager:
             logger.warning("Git command timed out: %s", " ".join(cmd))
             return ("", "Command timed out", 1)
 
+    async def _ensure_gitignore(self) -> bool:
+        """Ensure .gitignore exists and is up to date.
+
+        Returns:
+            True if gitignore was created or updated.
+        """
+        gitignore_path = self._repo_path / ".gitignore"
+        marker = "# Home Assistant .gitignore (managed by Mímir)"
+
+        # Check if our gitignore already exists
+        if gitignore_path.exists():
+            content = gitignore_path.read_text()
+            if marker in content:
+                logger.debug(".gitignore already managed by Mímir")
+                return False
+
+            # Append our rules to existing gitignore
+            logger.info("Appending Mímir rules to existing .gitignore")
+            with gitignore_path.open("a") as f:
+                f.write("\n\n" + HA_GITIGNORE)
+            return True
+
+        # Create new gitignore
+        logger.info("Creating .gitignore for Home Assistant config")
+        gitignore_path.write_text(HA_GITIGNORE)
+        return True
+
+    async def _remove_ignored_from_tracking(self) -> None:
+        """Remove files that are now in .gitignore from git tracking."""
+        # Remove cached files that match gitignore
+        await self._run_git("rm", "-r", "--cached", "--ignore-unmatch", ".storage/auth")
+        await self._run_git("rm", "-r", "--cached", "--ignore-unmatch", ".storage/backup")
+        await self._run_git("rm", "-r", "--cached", "--ignore-unmatch", ".storage/bluetooth.*")
+        await self._run_git("rm", "-r", "--cached", "--ignore-unmatch", "*.db")
+        await self._run_git("rm", "-r", "--cached", "--ignore-unmatch", "*.log")
+        await self._run_git("rm", "-r", "--cached", "--ignore-unmatch", "secrets.yaml")
+        logger.info("Removed ignored files from git tracking")
+
     async def initialize(self) -> bool:
         """Initialize git repository if needed.
 
@@ -85,6 +192,9 @@ class GitManager:
         if not self._repo_path.exists():
             logger.warning("Repository path does not exist: %s", self._repo_path)
             return False
+
+        # Ensure .gitignore exists first
+        gitignore_created = await self._ensure_gitignore()
 
         # Check if already a git repo
         _stdout, stderr, code = await self._run_git("rev-parse", "--git-dir")
@@ -102,7 +212,7 @@ class GitManager:
             await self._run_git("config", "user.name", self._config.author_name)
             await self._run_git("config", "user.email", self._config.author_email)
 
-            # Create initial commit
+            # Create initial commit with gitignore
             await self._run_git("add", "-A")
             await self._run_git(
                 "commit",
@@ -110,6 +220,10 @@ class GitManager:
                 "Initial commit by Mimir",
                 "--allow-empty",
             )
+        elif gitignore_created:
+            # Existing repo but new/updated gitignore - clean up tracked files
+            await self._remove_ignored_from_tracking()
+            await self._run_git("add", ".gitignore")
 
         self._initialized = True
         logger.info("Git repository initialized")

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.30] - 2025-01-11
+
+### Added
+
+- **Proper .gitignore for Home Assistant config**
+  - Excludes sensitive files (auth tokens, secrets.yaml, certificates)
+  - Excludes noisy files (sensor data, logs, databases, backups)
+  - Auto-created on git initialization
+  - Cleans up already-tracked ignored files from existing repos
+
 ## [0.1.29] - 2025-01-11
 
 ### Changed
