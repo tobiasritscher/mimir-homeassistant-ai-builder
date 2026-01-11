@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.33] - 2025-01-11
+
+### Fixed
+
+- Show actual error message in chat instead of generic "Failed to connect"
+
 ## [0.1.32] - 2025-01-11
 
 ### Changed

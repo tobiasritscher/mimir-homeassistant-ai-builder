@@ -565,7 +565,7 @@ STATUS_HTML = (
                 const data = await response.json();
                 addMessage('assistant', data.error ? 'Error: ' + data.error : data.response);
             }} catch (error) {{
-                addMessage('assistant', 'Error: Failed to connect to server');
+                addMessage('assistant', 'Error: ' + error.message);
             }}
 
             btn.disabled = false;
@@ -1647,7 +1647,7 @@ CHAT_HTML = (
                 const data = await response.json();
                 addMessage('assistant', data.error ? 'Error: ' + data.error : data.response);
             }} catch (error) {{
-                addMessage('assistant', 'Error: Failed to connect to server');
+                addMessage('assistant', 'Error: ' + error.message);
             }}
 
             btn.disabled = false;
