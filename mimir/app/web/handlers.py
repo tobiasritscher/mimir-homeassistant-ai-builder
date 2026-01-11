@@ -20,24 +20,25 @@ logger = get_logger(__name__)
 Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
 
 
-@web.middleware
-async def normalize_path_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
-    """Normalize paths by removing trailing slashes (except for root).
+def add_route_with_trailing_slash(
+    router: web.UrlDispatcher, method: str, path: str, handler: Handler
+) -> None:
+    """Add a route that handles both with and without trailing slash.
 
-    Instead of redirecting (which breaks ingress), we clone the request
-    with the normalized path and continue processing.
+    This is more reliable than cloning requests, especially with ingress.
     """
-    path = request.path
+    # Add the canonical path
+    if method == "GET":
+        router.add_get(path, handler)
+    elif method == "POST":
+        router.add_post(path, handler)
 
-    # Normalize path: remove trailing slashes (except for root)
-    # Also handle double slashes like // -> /
-    if path != "/":
-        normalized = "/" + path.strip("/")
-        if normalized != path:
-            # Clone request with normalized path
-            request = request.clone(rel_url=normalized)
-
-    return await handler(request)
+    # Add trailing slash variant (if not root)
+    if path != "/" and not path.endswith("/"):
+        if method == "GET":
+            router.add_get(path + "/", handler)
+        elif method == "POST":
+            router.add_post(path + "/", handler)
 
 
 @web.middleware
@@ -65,34 +66,39 @@ async def request_logger_middleware(request: web.Request, handler: Handler) -> w
 def setup_routes(app: web.Application) -> None:
     """Set up all web routes.
 
+    Routes are registered both with and without trailing slashes to handle
+    ingress path variations without relying on request cloning.
+
     Args:
         app: The aiohttp application.
     """
-    # Main pages
-    app.router.add_get("/", handle_status)
-    app.router.add_get("/chat", handle_chat_page)
-    app.router.add_get("/health", handle_health)
-    app.router.add_get("/audit", handle_audit_page)
-    app.router.add_get("/git", handle_git_page)
+    router = app.router
 
-    # Chat API
-    app.router.add_post("/api/chat", handle_chat_message)
-    app.router.add_get("/api/chat/history", handle_chat_history)
-    app.router.add_post("/api/chat/clear", handle_chat_clear)
+    # Main pages (with trailing slash variants)
+    add_route_with_trailing_slash(router, "GET", "/", handle_status)
+    add_route_with_trailing_slash(router, "GET", "/chat", handle_chat_page)
+    add_route_with_trailing_slash(router, "GET", "/health", handle_health)
+    add_route_with_trailing_slash(router, "GET", "/audit", handle_audit_page)
+    add_route_with_trailing_slash(router, "GET", "/git", handle_git_page)
 
-    # Audit API
-    app.router.add_get("/api/audit", handle_audit_list)
-    app.router.add_get("/api/audit/{id}", handle_audit_detail)
+    # Chat API (with trailing slash variants)
+    add_route_with_trailing_slash(router, "POST", "/api/chat", handle_chat_message)
+    add_route_with_trailing_slash(router, "GET", "/api/chat/history", handle_chat_history)
+    add_route_with_trailing_slash(router, "POST", "/api/chat/clear", handle_chat_clear)
 
-    # Git API
-    app.router.add_get("/api/git/status", handle_git_status)
-    app.router.add_get("/api/git/commits", handle_git_commits)
-    app.router.add_get("/api/git/diff/{sha}", handle_git_diff)
-    app.router.add_post("/api/git/commit", handle_git_commit)
-    app.router.add_post("/api/git/rollback", handle_git_rollback)
-    app.router.add_get("/api/git/branches", handle_git_branches)
-    app.router.add_post("/api/git/branches", handle_git_create_branch)
-    app.router.add_post("/api/git/checkout", handle_git_checkout)
+    # Audit API (with trailing slash variants)
+    add_route_with_trailing_slash(router, "GET", "/api/audit", handle_audit_list)
+    router.add_get("/api/audit/{id}", handle_audit_detail)  # Dynamic routes don't need slash variant
+
+    # Git API (with trailing slash variants)
+    add_route_with_trailing_slash(router, "GET", "/api/git/status", handle_git_status)
+    add_route_with_trailing_slash(router, "GET", "/api/git/commits", handle_git_commits)
+    router.add_get("/api/git/diff/{sha}", handle_git_diff)  # Dynamic routes don't need slash variant
+    add_route_with_trailing_slash(router, "POST", "/api/git/commit", handle_git_commit)
+    add_route_with_trailing_slash(router, "POST", "/api/git/rollback", handle_git_rollback)
+    add_route_with_trailing_slash(router, "GET", "/api/git/branches", handle_git_branches)
+    add_route_with_trailing_slash(router, "POST", "/api/git/branches", handle_git_create_branch)
+    add_route_with_trailing_slash(router, "POST", "/api/git/checkout", handle_git_checkout)
 
 
 # ============== Main Pages ==============

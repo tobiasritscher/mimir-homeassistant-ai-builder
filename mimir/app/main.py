@@ -38,7 +38,7 @@ from .tools.memory_tools import ForgetMemoryTool, RecallMemoriesTool, StoreMemor
 from .tools.registry import ToolRegistry
 from .tools.web_search import HACSSearchTool, HomeAssistantDocsSearchTool, WebSearchTool
 from .utils.logging import get_logger, setup_logging
-from .web import normalize_path_middleware, request_logger_middleware, setup_routes
+from .web import request_logger_middleware, setup_routes
 
 if TYPE_CHECKING:
     from .ha.types import TelegramMessage
@@ -214,7 +214,7 @@ class MimirAgent:
     async def _start_web_server(self) -> None:
         """Start the web server."""
         self._web_app = web.Application(
-            middlewares=[normalize_path_middleware, request_logger_middleware]
+            middlewares=[request_logger_middleware]
         )
 
         # Store references for handlers
