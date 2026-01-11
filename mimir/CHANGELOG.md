@@ -7,13 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.25] - 2025-01-11
+
+### Fixed
+
+- Fix ingress panel opening HA dashboard instead of Mímir
+  - Changed from redirect (301) to request cloning
+  - Redirect broke ingress because browser interpreted `/` as HA root
+  - Now normalizes path in-place without redirect
+
 ## [0.1.24] - 2025-01-11
 
 ### Fixed
 
 - Fix 404 error on ingress panel access
   - Added `normalize_path_middleware` to handle trailing slashes
-  - Redirects `/path/` to `/path` (fixes double-slash issue from HA ingress)
   - Improved request logging with X-Ingress-Path header
 
 ## [0.1.23] - 2025-01-11

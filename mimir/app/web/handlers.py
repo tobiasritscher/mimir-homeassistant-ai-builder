@@ -22,22 +22,20 @@ Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
 
 @web.middleware
 async def normalize_path_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
-    """Normalize paths by removing trailing slashes (except for root)."""
+    """Normalize paths by removing trailing slashes (except for root).
+
+    Instead of redirecting (which breaks ingress), we clone the request
+    with the normalized path and continue processing.
+    """
     path = request.path
 
-    # Remove duplicate slashes and trailing slashes (except root)
-    if path != "/" and path.endswith("/"):
-        # Redirect to path without trailing slash
-        new_path = path.rstrip("/")
-        if not new_path:
-            new_path = "/"
-
-        # Build new URL
-        new_url = new_path
-        if request.query_string:
-            new_url += "?" + request.query_string
-
-        raise web.HTTPMovedPermanently(new_url)
+    # Normalize path: remove trailing slashes (except for root)
+    # Also handle double slashes like // -> /
+    if path != "/":
+        normalized = "/" + path.strip("/")
+        if normalized != path:
+            # Clone request with normalized path
+            request = request.clone(rel_url=normalized)
 
     return await handler(request)
 
