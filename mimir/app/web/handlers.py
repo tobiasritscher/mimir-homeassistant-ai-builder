@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from aiohttp import web
@@ -15,9 +16,14 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# Type alias for aiohttp handler
+Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
+
 
 @web.middleware
-async def request_logger_middleware(request: web.Request, handler):
+async def request_logger_middleware(
+    request: web.Request, handler: Handler
+) -> web.StreamResponse:
     """Log all incoming requests for debugging."""
     logger.debug(
         "Request: %s %s (headers: %s)",

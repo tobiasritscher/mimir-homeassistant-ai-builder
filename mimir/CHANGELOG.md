@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.21] - 2025-01-11
+
+### Fixed
+
+- Fix service calls not working (API problem)
+  - `call_service` was wrapping target in nested object: `{"target": {"entity_id": ...}}`
+  - HA REST API expects `entity_id` directly in payload: `{"entity_id": ...}`
+  - Now correctly merges target into service data
+
 ## [0.1.20] - 2025-01-10
 
 ### Added

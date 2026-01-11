@@ -167,9 +167,10 @@ class HomeAssistantAPI:
         if service_data:
             data.update(service_data)
         if target:
-            data["target"] = target
+            # Merge target directly into data (entity_id, device_id, area_id)
+            data.update(target)
 
-        logger.info("Calling service: %s.%s", domain, service)
+        logger.info("Calling service: %s.%s with data: %s", domain, service, data)
         result = await self.post(f"services/{domain}/{service}", data)
 
         if isinstance(result, list):
