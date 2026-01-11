@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from aiohttp import web
 
 from ..utils.logging import get_logger
-from .templates import AUDIT_HTML, GIT_HTML, STATUS_HTML
+from .templates import AUDIT_HTML, CHAT_HTML, GIT_HTML, STATUS_HTML
 
 if TYPE_CHECKING:
     from ..db.repository import AuditRepository
@@ -188,65 +188,9 @@ async def handle_git_page(_request: web.Request) -> web.Response:
 
 async def handle_chat_page(request: web.Request) -> web.Response:
     """Handle GET / or /chat - Chat page (default view for ingress)."""
-    # Log that we're serving the chat page
     logger.info("Serving chat page for path: %s", request.path)
-
-    # Return simple HTML that definitely works
-    simple_html = """<!DOCTYPE html>
-<html>
-<head>
-    <title>Mimir Chat</title>
-    <meta charset="utf-8">
-    <style>
-        body { font-family: sans-serif; background: #1a1a2e; color: #e2e8f0; padding: 20px; }
-        h1 { color: #818cf8; }
-        #chat { background: #0f172a; padding: 20px; border-radius: 8px; margin: 20px 0; min-height: 200px; }
-        input { width: 70%; padding: 10px; border-radius: 4px; border: 1px solid #6366f1; background: #1e293b; color: white; }
-        button { padding: 10px 20px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .msg { margin: 10px 0; padding: 10px; border-radius: 8px; }
-        .user { background: #6366f1; margin-left: 20%; }
-        .bot { background: #334155; margin-right: 20%; }
-        nav { margin-bottom: 20px; }
-        nav a { color: #a5b4fc; margin-right: 15px; }
-    </style>
-</head>
-<body>
-    <h1>Mimir</h1>
-    <nav>
-        <a href="status">Status</a>
-        <a href="audit">Audit</a>
-        <a href="git">Git</a>
-        <a href="debug">Debug</a>
-    </nav>
-    <div id="chat"></div>
-    <input type="text" id="msg" placeholder="Ask something..." onkeypress="if(event.key==='Enter')send()">
-    <button onclick="send()">Send</button>
-    <script>
-        async function send() {
-            const input = document.getElementById('msg');
-            const chat = document.getElementById('chat');
-            const text = input.value.trim();
-            if (!text) return;
-            chat.innerHTML += '<div class="msg user">' + text + '</div>';
-            input.value = '';
-            try {
-                const r = await fetch('api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:text})});
-                const d = await r.json();
-                chat.innerHTML += '<div class="msg bot">' + (d.response || d.error || 'No response') + '</div>';
-            } catch(e) {
-                chat.innerHTML += '<div class="msg bot">Error: ' + e.message + '</div>';
-            }
-            chat.scrollTop = chat.scrollHeight;
-        }
-        fetch('api/chat/history').then(r=>r.json()).then(d=>{
-            if(d.history) d.history.forEach(m => {
-                document.getElementById('chat').innerHTML += '<div class="msg '+(m.role==='user'?'user':'bot')+'">' + m.content + '</div>';
-            });
-        }).catch(()=>{});
-    </script>
-</body>
-</html>"""
-    return web.Response(text=simple_html, content_type="text/html")
+    # Call .format() to convert doubled braces {{}} to single braces {}
+    return web.Response(text=CHAT_HTML.format(), content_type="text/html")
 
 
 # ============== Chat API ==============
