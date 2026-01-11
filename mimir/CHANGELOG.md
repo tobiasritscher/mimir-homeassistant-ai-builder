@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.38] - 2025-01-11
+
+### Added
+
+- **User context awareness**: Mímir now knows who it's talking to
+  - Extracts user info from Home Assistant ingress headers (X-Remote-User-*)
+  - Includes user's display name and username in system prompt
+  - Works for both web (HA sidebar) and Telegram users
+  - Debug endpoint (`/debug`) shows extracted user context
+  - Enables personalized responses based on user preferences
+
 ## [0.1.37] - 2025-01-11
 
 ### Fixed

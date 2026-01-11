@@ -14,6 +14,7 @@ from ..utils.logging import get_logger
 if TYPE_CHECKING:
     from ..config import OperatingMode
     from ..db.repository import AuditRepository, MemoryRepository
+    from ..ha.types import UserContext
     from ..llm.base import LLMProvider
     from ..tools.registry import ToolRegistry
 
@@ -146,6 +147,9 @@ class ConversationManager:
         self._current_user_id: str | None = None
         self._current_audit_log_id: int | None = None
 
+        # Current user context (set per message)
+        self._current_user: UserContext | None = None
+
         # Cached memory summary (refreshed periodically)
         self._memory_summary: str = ""
 
@@ -239,15 +243,30 @@ class ConversationManager:
             logger.warning("Failed to load memory summary: %s", e)
 
     def _build_system_prompt(self) -> str:
-        """Build the full system prompt including memories.
+        """Build the full system prompt including user context and memories.
 
         Returns:
-            The complete system prompt with any stored memories appended.
+            The complete system prompt with user context and stored memories.
         """
-        if not self._memory_summary:
-            return SYSTEM_PROMPT
+        prompt = SYSTEM_PROMPT
 
-        return f"{SYSTEM_PROMPT}\n\n{self._memory_summary}"
+        # Add user context if available
+        if self._current_user:
+            prompt += "\n\n## Current User\n"
+            prompt += f"You are talking to **{self._current_user.friendly_name}**"
+            if self._current_user.username:
+                prompt += f" (username: {self._current_user.username})"
+            prompt += f"\nThey are accessing you via: {self._current_user.source}\n"
+            prompt += (
+                "Adapt your responses to this user's preferences if you remember any "
+                "from the facts below."
+            )
+
+        # Add memory summary if available
+        if self._memory_summary:
+            prompt += f"\n\n{self._memory_summary}"
+
+        return prompt
 
     async def _execute_tool_calls(
         self,
@@ -296,8 +315,7 @@ class ConversationManager:
     async def process_message(
         self,
         user_message: str,
-        source: str | None = None,
-        user_id: str | None = None,
+        user_context: UserContext | None = None,
     ) -> str:
         """Process a user message and generate a response.
 
@@ -309,17 +327,16 @@ class ConversationManager:
 
         Args:
             user_message: The user's message.
-            source: Optional source override ('telegram', 'web').
-            user_id: Optional user ID override.
+            user_context: Context about the current user (from HA headers or Telegram).
 
         Returns:
             The assistant's response text.
         """
-        # Set message context if provided
-        if source:
-            self._current_source = source
-        if user_id:
-            self._current_user_id = user_id
+        # Set user context for this message
+        self._current_user = user_context
+        if user_context:
+            self._current_source = user_context.source
+            self._current_user_id = user_context.user_id
 
         # Add user message to history
         self._messages.append(Message.user(user_message))

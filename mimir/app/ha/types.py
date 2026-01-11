@@ -185,3 +185,33 @@ class TelegramMessage:
             from_username=data.get("from_username"),
             date=date,
         )
+
+
+@dataclass
+class UserContext:
+    """Context about the current user interacting with Mímir.
+
+    This is populated from:
+    - Web: Home Assistant ingress headers (X-Remote-User-*)
+    - Telegram: Message sender information
+    """
+
+    user_id: str
+    username: str | None = None
+    display_name: str | None = None
+    source: str = "unknown"  # "web", "telegram"
+
+    @property
+    def friendly_name(self) -> str:
+        """Get the best available name for the user."""
+        return self.display_name or self.username or f"User {self.user_id}"
+
+    @classmethod
+    def from_telegram_message(cls, message: TelegramMessage) -> UserContext:
+        """Create UserContext from a Telegram message."""
+        return cls(
+            user_id=str(message.user_id),
+            username=message.from_username,
+            display_name=message.from_first_name,
+            source="telegram",
+        )

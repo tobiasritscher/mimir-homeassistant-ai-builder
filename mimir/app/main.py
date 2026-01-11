@@ -43,13 +43,15 @@ from .web import request_logger_middleware, setup_routes
 if TYPE_CHECKING:
     from .ha.types import TelegramMessage
 
+from .ha.types import UserContext
+
 logger = get_logger(__name__)
 
 
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.37"
+    VERSION = "0.1.38"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -123,18 +125,19 @@ class MimirAgent:
         if not message.text:
             return None
 
-        # Set message context for audit logging
-        self._conversation_manager.set_message_context(
-            source="telegram",
-            user_id=str(message.user_id),
+        # Create user context from Telegram message
+        user_context = UserContext.from_telegram_message(message)
+        logger.info(
+            "Telegram message from user: %s (%s)",
+            user_context.friendly_name,
+            user_context.user_id,
         )
 
-        # Process the message
+        # Process the message with user context
         try:
             response = await self._conversation_manager.process_message(
                 message.text,
-                source="telegram",
-                user_id=str(message.user_id),
+                user_context=user_context,
             )
             return response
         except Exception as e:

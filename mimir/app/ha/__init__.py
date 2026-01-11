@@ -2,7 +2,7 @@
 
 from .api import HomeAssistantAPI
 from .mcp_client import HomeAssistantMCP
-from .types import Entity, EntityState, Event, Service
+from .types import Entity, EntityState, Event, Service, UserContext
 from .websocket import HomeAssistantWebSocket
 
 __all__ = [
@@ -13,4 +13,5 @@ __all__ = [
     "HomeAssistantMCP",
     "HomeAssistantWebSocket",
     "Service",
+    "UserContext",
 ]

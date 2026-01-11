@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from aiohttp import web
 
+from ..ha.types import UserContext
 from ..utils.logging import get_logger
 from .templates import AUDIT_HTML, CHAT_HTML, GIT_HTML, STATUS_HTML
 
@@ -31,6 +32,25 @@ def get_base_path(request: web.Request) -> str:
         The ingress base path, or empty string if not behind ingress.
     """
     return request.headers.get("X-Ingress-Path", "")
+
+
+def get_user_context(request: web.Request) -> UserContext:
+    """Extract user context from Home Assistant ingress headers.
+
+    When accessed through HA's ingress, these headers are automatically set:
+    - X-Remote-User-Id: The HA user's unique ID
+    - X-Remote-User-Name: The HA username (login name)
+    - X-Remote-User-Display-Name: The user's display name
+
+    Returns:
+        UserContext with user information from headers, or defaults for non-ingress access.
+    """
+    return UserContext(
+        user_id=request.headers.get("X-Remote-User-Id", "web_user"),
+        username=request.headers.get("X-Remote-User-Name"),
+        display_name=request.headers.get("X-Remote-User-Display-Name"),
+        source="web",
+    )
 
 
 def add_route_with_trailing_slash(
@@ -168,6 +188,9 @@ async def handle_debug(request: web.Request) -> web.Response:
     agent = request.app.get("agent")
     version = agent.VERSION if agent else "unknown"
 
+    # Extract user context
+    user = get_user_context(request)
+
     # Collect request info
     headers_info = "\n".join(f"  {k}: {v}" for k, v in request.headers.items())
 
@@ -179,7 +202,14 @@ Method: {request.method}
 Host: {request.host}
 Remote: {request.remote}
 
-Headers:
+User Context (from HA ingress headers):
+  User ID: {user.user_id}
+  Username: {user.username or "(not set)"}
+  Display Name: {user.display_name or "(not set)"}
+  Friendly Name: {user.friendly_name}
+  Source: {user.source}
+
+All Headers:
 {headers_info}
 
 If you see this, the web server is working!
@@ -236,11 +266,18 @@ async def handle_chat_message(request: web.Request) -> web.Response:
                 status=400,
             )
 
-        # Process the message
+        # Extract user context from HA ingress headers
+        user_context = get_user_context(request)
+        logger.info(
+            "Chat message from user: %s (%s)",
+            user_context.friendly_name,
+            user_context.user_id,
+        )
+
+        # Process the message with user context
         response = await agent._conversation_manager.process_message(
             message,
-            source="web",
-            user_id="web_user",
+            user_context=user_context,
         )
 
         return web.json_response({"response": response})
