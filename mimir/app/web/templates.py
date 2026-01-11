@@ -1,5 +1,33 @@
 """HTML templates for Mímir web interface."""
 
+from __future__ import annotations
+
+import os
+
+try:
+    from importlib.metadata import PackageNotFoundError, version as pkg_version
+except Exception:  # pragma: no cover
+    PackageNotFoundError = Exception
+    pkg_version = None
+
+
+def _get_app_version() -> str:
+    """Return the Mímir version shown in the web UI."""
+    env_version = os.getenv("MIMIR_VERSION") or os.getenv("ADDON_VERSION")
+    if env_version:
+        return env_version
+
+    if pkg_version is None:
+        return "unknown"
+
+    try:
+        return pkg_version("mimir")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+APP_VERSION = _get_app_version()
+
 # Shared CSS styles (braces doubled for .format() compatibility)
 SHARED_STYLES = """
     * {{
@@ -431,31 +459,31 @@ STATUS_HTML = (
             <h2>&#128202; Status</h2>
             <div class="status-item">
                 <span class="status-label">Version</span>
-                <span class="status-value">{{version}}</span>
+                <span class="status-value">{version}</span>
             </div>
             <div class="status-item">
                 <span class="status-label">LLM Provider</span>
-                <span class="status-value">{{llm_provider}}</span>
+                <span class="status-value">{llm_provider}</span>
             </div>
             <div class="status-item">
                 <span class="status-label">Model</span>
-                <span class="status-value">{{llm_model}}</span>
+                <span class="status-value">{llm_model}</span>
             </div>
             <div class="status-item">
                 <span class="status-label">Operating Mode</span>
-                <span class="status-value">{{operating_mode}}</span>
+                <span class="status-value">{operating_mode}</span>
             </div>
             <div class="status-item">
                 <span class="status-label">Home Assistant</span>
-                <span class="status-value {{ha_status_class}}">{{ha_status}}</span>
+                <span class="status-value {ha_status_class}">{ha_status}</span>
             </div>
             <div class="status-item">
                 <span class="status-label">WebSocket</span>
-                <span class="status-value {{ws_status_class}}">{{ws_status}}</span>
+                <span class="status-value {ws_status_class}">{ws_status}</span>
             </div>
             <div class="status-item">
                 <span class="status-label">Registered Tools</span>
-                <span class="status-value">{{tool_count}}</span>
+                <span class="status-value">{tool_count}</span>
             </div>
         </div>
 
@@ -562,6 +590,9 @@ STATUS_HTML = (
 </html>
 """
 )
+
+# Inline the version so the dashboard doesn't depend on a `{version}` placeholder from the backend.
+STATUS_HTML = STATUS_HTML.replace("{version}", APP_VERSION)
 
 # Audit log page
 AUDIT_HTML = (
