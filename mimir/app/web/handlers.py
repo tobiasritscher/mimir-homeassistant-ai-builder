@@ -21,13 +21,37 @@ Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
 
 
 @web.middleware
+async def normalize_path_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
+    """Normalize paths by removing trailing slashes (except for root)."""
+    path = request.path
+
+    # Remove duplicate slashes and trailing slashes (except root)
+    if path != "/" and path.endswith("/"):
+        # Redirect to path without trailing slash
+        new_path = path.rstrip("/")
+        if not new_path:
+            new_path = "/"
+
+        # Build new URL
+        new_url = new_path
+        if request.query_string:
+            new_url += "?" + request.query_string
+
+        raise web.HTTPMovedPermanently(new_url)
+
+    return await handler(request)
+
+
+@web.middleware
 async def request_logger_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
     """Log all incoming requests for debugging."""
+    # Get ingress path header for debugging
+    ingress_path = request.headers.get("X-Ingress-Path", "")
     logger.debug(
-        "Request: %s %s (headers: %s)",
+        "Request: %s %s (ingress: %s)",
         request.method,
         request.path,
-        dict(request.headers),
+        ingress_path,
     )
     try:
         response = await handler(request)

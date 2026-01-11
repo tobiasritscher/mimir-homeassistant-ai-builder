@@ -1,5 +1,5 @@
 name: Mimir
-version: "0.1.23"
+version: "0.1.24"
 slug: mimir
 description: Intelligent Home Assistant agent with Nordic wisdom
 url: https://github.com/tobiasritscher/mimir-homeassistant-ai-builder
