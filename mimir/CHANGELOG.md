@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.35] - 2025-01-11
+
+### Fixed
+
+- Better error handling for chat API calls
+  - Check response.ok before parsing JSON
+  - Show HTTP status code and response text on error
+
 ## [0.1.34] - 2025-01-11
 
 ### Fixed

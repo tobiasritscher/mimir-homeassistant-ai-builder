@@ -572,6 +572,11 @@ STATUS_HTML = (
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ message: message }})
                 }});
+                if (!response.ok) {{
+                    const text = await response.text();
+                    addMessage('assistant', 'Error (' + response.status + '): ' + text.substring(0, 200));
+                    return;
+                }}
                 const data = await response.json();
                 addMessage('assistant', data.error ? 'Error: ' + data.error : data.response);
             }} catch (error) {{
@@ -1654,6 +1659,11 @@ CHAT_HTML = (
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ message: message }})
                 }});
+                if (!response.ok) {{
+                    const text = await response.text();
+                    addMessage('assistant', 'Error (' + response.status + '): ' + text.substring(0, 200));
+                    return;
+                }}
                 const data = await response.json();
                 addMessage('assistant', data.error ? 'Error: ' + data.error : data.response);
             }} catch (error) {{
