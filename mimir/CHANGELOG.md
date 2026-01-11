@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.26] - 2025-01-11
+
+### Added
+
+- added new Icon
+
 ## [0.1.25] - 2025-01-11
 
 ### Fixed
