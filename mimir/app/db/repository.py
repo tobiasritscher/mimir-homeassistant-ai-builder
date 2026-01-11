@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import json
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from ..utils.logging import get_logger
 
@@ -434,3 +434,203 @@ class AuditRepository:
             logger.info("Cleaned up %d old audit log entries", deleted)
 
         return deleted
+
+
+@dataclass
+class MemoryEntry:
+    """Represents a long-term memory entry."""
+
+    id: int
+    created_at: str
+    updated_at: str
+    category: str
+    content: str
+    source: str | None = None
+    user_id: str | None = None
+
+    @classmethod
+    def from_row(cls, row: Any) -> MemoryEntry:
+        """Create from database row."""
+        return cls(
+            id=row["id"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            category=row["category"],
+            content=row["content"],
+            source=row["source"],
+            user_id=row["user_id"],
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "category": self.category,
+            "content": self.content,
+            "source": self.source,
+            "user_id": self.user_id,
+        }
+
+
+class MemoryRepository:
+    """Repository for long-term memory operations."""
+
+    # Predefined categories for organization
+    CATEGORIES: ClassVar[list[str]] = [
+        "user_preference",  # User preferences (language, style, etc.)
+        "device_info",  # Device names, locations, quirks
+        "automation_note",  # Notes about automations
+        "home_layout",  # Room names, areas, structure
+        "routine",  # User routines and schedules
+        "general",  # General facts and notes
+    ]
+
+    def __init__(self, db: Database) -> None:
+        """Initialize the repository.
+
+        Args:
+            db: Database connection instance.
+        """
+        self._db = db
+
+    async def add_memory(
+        self,
+        content: str,
+        category: str = "general",
+        source: str | None = None,
+        user_id: str | None = None,
+    ) -> int:
+        """Add a new memory.
+
+        Args:
+            content: The memory content.
+            category: Category of the memory.
+            source: Source of the memory (telegram, web).
+            user_id: Optional user identifier.
+
+        Returns:
+            The ID of the created memory.
+        """
+        await self._db.execute(
+            """
+            INSERT INTO memories (category, content, source, user_id)
+            VALUES (?, ?, ?, ?)
+            """,
+            (category, content, source, user_id),
+        )
+        await self._db.commit()
+
+        memory_id = await self._db.get_last_insert_id()
+        logger.info("Added memory: id=%d, category=%s", memory_id, category)
+        return memory_id
+
+    async def get_all_memories(self) -> list[MemoryEntry]:
+        """Get all memories.
+
+        Returns:
+            List of all memory entries.
+        """
+        rows = await self._db.fetch_all("SELECT * FROM memories ORDER BY category, created_at DESC")
+        return [MemoryEntry.from_row(row) for row in rows]
+
+    async def get_memories_by_category(self, category: str) -> list[MemoryEntry]:
+        """Get memories by category.
+
+        Args:
+            category: The category to filter by.
+
+        Returns:
+            List of memory entries in that category.
+        """
+        rows = await self._db.fetch_all(
+            "SELECT * FROM memories WHERE category = ? ORDER BY created_at DESC",
+            (category,),
+        )
+        return [MemoryEntry.from_row(row) for row in rows]
+
+    async def search_memories(self, query: str) -> list[MemoryEntry]:
+        """Search memories by content.
+
+        Args:
+            query: Search query string.
+
+        Returns:
+            List of matching memory entries.
+        """
+        search_pattern = f"%{query}%"
+        rows = await self._db.fetch_all(
+            """
+            SELECT * FROM memories
+            WHERE content LIKE ?
+            ORDER BY created_at DESC
+            """,
+            (search_pattern,),
+        )
+        return [MemoryEntry.from_row(row) for row in rows]
+
+    async def update_memory(self, memory_id: int, content: str) -> bool:
+        """Update a memory's content.
+
+        Args:
+            memory_id: The memory ID to update.
+            content: The new content.
+
+        Returns:
+            True if updated, False if not found.
+        """
+        cursor = await self._db.execute(
+            """
+            UPDATE memories
+            SET content = ?, updated_at = datetime('now')
+            WHERE id = ?
+            """,
+            (content, memory_id),
+        )
+        await self._db.commit()
+        return cursor.rowcount > 0
+
+    async def delete_memory(self, memory_id: int) -> bool:
+        """Delete a memory.
+
+        Args:
+            memory_id: The memory ID to delete.
+
+        Returns:
+            True if deleted, False if not found.
+        """
+        cursor = await self._db.execute(
+            "DELETE FROM memories WHERE id = ?",
+            (memory_id,),
+        )
+        await self._db.commit()
+        return cursor.rowcount > 0
+
+    async def get_memory_summary(self) -> str:
+        """Get a formatted summary of all memories for the system prompt.
+
+        Returns:
+            Formatted string of memories grouped by category.
+        """
+        memories = await self.get_all_memories()
+
+        if not memories:
+            return ""
+
+        # Group by category
+        by_category: dict[str, list[str]] = {}
+        for mem in memories:
+            if mem.category not in by_category:
+                by_category[mem.category] = []
+            by_category[mem.category].append(mem.content)
+
+        # Format output
+        lines = ["## Stored Memories"]
+        for category, items in sorted(by_category.items()):
+            category_display = category.replace("_", " ").title()
+            lines.append(f"\n### {category_display}")
+            for item in items:
+                lines.append(f"- {item}")
+
+        return "\n".join(lines)

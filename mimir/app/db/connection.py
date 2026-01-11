@@ -39,6 +39,20 @@ CREATE INDEX IF NOT EXISTS idx_audit_source ON audit_logs(source);
 CREATE INDEX IF NOT EXISTS idx_audit_message_type ON audit_logs(message_type);
 CREATE INDEX IF NOT EXISTS idx_tool_name ON tool_executions(tool_name);
 CREATE INDEX IF NOT EXISTS idx_tool_timestamp ON tool_executions(timestamp);
+
+-- Long-term memory storage
+CREATE TABLE IF NOT EXISTS memories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    category TEXT NOT NULL,
+    content TEXT NOT NULL,
+    source TEXT,
+    user_id TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_memories_category ON memories(category);
+CREATE INDEX IF NOT EXISTS idx_memories_created ON memories(created_at);
 """
 
 

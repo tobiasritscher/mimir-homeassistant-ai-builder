@@ -13,7 +13,7 @@ from ..utils.logging import get_logger
 
 if TYPE_CHECKING:
     from ..config import OperatingMode
-    from ..db.repository import AuditRepository
+    from ..db.repository import AuditRepository, MemoryRepository
     from ..llm.base import LLMProvider
     from ..tools.registry import ToolRegistry
 
@@ -117,6 +117,7 @@ class ConversationManager:
         tool_registry: ToolRegistry,
         operating_mode: OperatingMode,
         audit_repository: AuditRepository | None = None,
+        memory_repository: MemoryRepository | None = None,
         max_history: int = 50,
         max_tool_iterations: int = 10,
     ) -> None:
@@ -127,6 +128,7 @@ class ConversationManager:
             tool_registry: Registry of available tools.
             operating_mode: Current operating mode.
             audit_repository: Optional repository for audit logging.
+            memory_repository: Optional repository for long-term memory.
             max_history: Maximum number of messages to keep in history.
             max_tool_iterations: Maximum tool call iterations per turn.
         """
@@ -134,6 +136,7 @@ class ConversationManager:
         self._tool_registry = tool_registry
         self._operating_mode = operating_mode
         self._audit = audit_repository
+        self._memory = memory_repository
         self._max_history = max_history
         self._max_tool_iterations = max_tool_iterations
         self._messages: list[Message] = []
@@ -142,6 +145,9 @@ class ConversationManager:
         self._current_source: str = "unknown"
         self._current_user_id: str | None = None
         self._current_audit_log_id: int | None = None
+
+        # Cached memory summary (refreshed periodically)
+        self._memory_summary: str = ""
 
     def set_message_context(
         self,
@@ -219,6 +225,29 @@ class ConversationManager:
             # Keep the most recent messages
             self._messages = self._messages[-self._max_history :]
             logger.debug("History trimmed to %d messages", len(self._messages))
+
+    async def refresh_memory_summary(self) -> None:
+        """Refresh the cached memory summary from the database."""
+        if not self._memory:
+            return
+
+        try:
+            self._memory_summary = await self._memory.get_memory_summary()
+            if self._memory_summary:
+                logger.debug("Loaded memory summary (%d chars)", len(self._memory_summary))
+        except Exception as e:
+            logger.warning("Failed to load memory summary: %s", e)
+
+    def _build_system_prompt(self) -> str:
+        """Build the full system prompt including memories.
+
+        Returns:
+            The complete system prompt with any stored memories appended.
+        """
+        if not self._memory_summary:
+            return SYSTEM_PROMPT
+
+        return f"{SYSTEM_PROMPT}\n\n{self._memory_summary}"
 
     async def _execute_tool_calls(
         self,
@@ -313,6 +342,12 @@ class ConversationManager:
         # Get available tools
         tools = self._tool_registry.get_llm_tools()
 
+        # Refresh memory summary (includes any new memories from this session)
+        await self.refresh_memory_summary()
+
+        # Build system prompt with memories
+        system_prompt = self._build_system_prompt()
+
         # Tool execution loop
         iterations = 0
         while iterations < self._max_tool_iterations:
@@ -322,7 +357,7 @@ class ConversationManager:
             response = await self._llm.complete(
                 messages=self._messages,
                 tools=tools if tools else None,
-                system=SYSTEM_PROMPT,
+                system=system_prompt,
             )
 
             logger.debug(

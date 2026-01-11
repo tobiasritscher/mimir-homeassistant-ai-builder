@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.23] - 2025-01-11
+
+### Added
+
+- **Long-term memory system**: Mímir can now remember facts permanently
+  - New `store_memory` tool: Save facts when user says "merke dir das"
+  - New `recall_memories` tool: Search stored memories
+  - New `forget_memory` tool: Delete outdated memories
+  - Categories: user_preference, device_info, automation_note, home_layout, routine, general
+  - Memories are included in system prompt for every conversation
+  - Persists across restarts in SQLite database
+
 ## [0.1.22] - 2025-01-11
 
 ### Added

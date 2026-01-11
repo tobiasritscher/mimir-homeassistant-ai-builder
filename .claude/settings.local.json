@@ -7,7 +7,18 @@
       "WebFetch(domain:blog.michal.pawlik.dev)",
       "WebFetch(domain:www.home-assistant.io)",
       "Bash(pip install:*)",
-      "Bash(ruff check:*)"
+      "Bash(ruff check:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git restore:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(git -C /Users/tobias.ritscher/Desktop/Projects/05_Privat/Mimir push)",
+      "Bash(git -C /Users/tobias.ritscher/Desktop/Projects/05_Privat/Mimir add mimir/config.yaml mimir/CHANGELOG.md)",
+      "Bash(git -C /Users/tobias.ritscher/Desktop/Projects/05_Privat/Mimir commit -m \"$\\(cat <<''EOF''\nRelease v0.1.12: Update add-on version and changelog\n\n- Bump version to 0.1.12 in config.yaml\n- Add /data mapping for database persistence\n- Add release notes for web chat, audit logging, and git features\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/tobias.ritscher/Desktop/Projects/05_Privat/Mimir add mimir/app/web/templates.py)",
+      "Bash(git -C /Users/tobias.ritscher/Desktop/Projects/05_Privat/Mimir commit -m \"$\\(cat <<''EOF''\nRedesign web UI with polished dark theme\n\n- Create shared CSS styles for consistent design across all pages\n- Add glassmorphism-style cards with subtle borders and shadows\n- Improve form elements \\(inputs, selects, buttons\\) with gradient accents\n- Add loading spinners and empty state indicators\n- Enhance modals with backdrop blur effect\n- Style tables with hover effects and better typography\n- Add color-coded badges for sources and message types\n- Improve git diff viewer with syntax highlighting\n- Add smooth animations and transitions throughout\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/tobias.ritscher/Desktop/Projects/05_Privat/Mimir commit -m \"$\\(cat <<''EOF''\nRelease v0.1.13: Redesigned web UI\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   },
   "sandbox": {

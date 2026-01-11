@@ -14,7 +14,7 @@ from aiohttp import web
 
 from .config import load_config
 from .conversation.manager import ConversationManager
-from .db import AuditRepository, Database
+from .db import AuditRepository, Database, MemoryRepository
 from .git import GitManager
 from .git.manager import GitConfig
 from .ha.api import HomeAssistantAPI
@@ -34,6 +34,7 @@ from .tools.ha_tools import (
     GetServicesTool,
     UpdateAutomationTool,
 )
+from .tools.memory_tools import ForgetMemoryTool, RecallMemoriesTool, StoreMemoryTool
 from .tools.registry import ToolRegistry
 from .tools.web_search import HACSSearchTool, HomeAssistantDocsSearchTool, WebSearchTool
 from .utils.logging import get_logger, setup_logging
@@ -48,7 +49,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.22"
+    VERSION = "0.1.23"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -63,9 +64,10 @@ class MimirAgent:
         self._telegram_handler: TelegramHandler | None = None
         self._conversation_manager: ConversationManager | None = None
 
-        # Database and audit
+        # Database, audit, and memory
         self._database: Database | None = None
         self._audit: AuditRepository | None = None
+        self._memory: MemoryRepository | None = None
 
         # Git manager
         self._git: GitManager | None = None
@@ -156,11 +158,18 @@ class MimirAgent:
             return False
 
     async def _init_database(self) -> None:
-        """Initialize database and audit repository."""
+        """Initialize database, audit, and memory repositories."""
         db_path = "/data/mimir.db"
         self._database = Database(db_path)
         await self._database.initialize()
         self._audit = AuditRepository(self._database)
+        self._memory = MemoryRepository(self._database)
+
+        # Register memory tools now that we have the repository
+        self._tool_registry.register(StoreMemoryTool(self._memory))
+        self._tool_registry.register(RecallMemoriesTool(self._memory))
+        self._tool_registry.register(ForgetMemoryTool(self._memory))
+
         logger.info("Database initialized at %s", db_path)
 
     async def _init_git(self) -> None:
@@ -272,16 +281,18 @@ class MimirAgent:
             await self._stop_web_server()
             return
 
-        # Initialize conversation manager with audit
+        # Initialize conversation manager with audit and memory
         self._conversation_manager = ConversationManager(
             llm=self._llm,
             tool_registry=self._tool_registry,
             operating_mode=self._config.operating_mode,
             audit_repository=self._audit,
+            memory_repository=self._memory,
         )
 
-        # Load conversation history from previous sessions
+        # Load conversation history and memories from previous sessions
         await self._conversation_manager.load_history_from_audit()
+        await self._conversation_manager.refresh_memory_summary()
 
         # Set up tool execution callback for audit logging
         self._tool_registry.set_execution_callback(self._create_tool_execution_callback())
