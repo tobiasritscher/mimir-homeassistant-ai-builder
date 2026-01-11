@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.37] - 2025-01-11
+
+### Fixed
+
+- **Proper ingress support for API calls**
+  - Use `X-Ingress-Path` header to determine base URL for API requests
+  - All fetch calls now use `apiUrl()` helper with the correct ingress path
+  - Fixes 404 errors when using chat via Home Assistant sidebar panel
+
 ## [0.1.36] - 2025-01-11
 
 ### Fixed

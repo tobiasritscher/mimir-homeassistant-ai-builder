@@ -20,6 +20,19 @@ logger = get_logger(__name__)
 Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
 
 
+def get_base_path(request: web.Request) -> str:
+    """Extract the ingress base path from the request.
+
+    Home Assistant's ingress proxy adds an X-Ingress-Path header that contains
+    the base path (e.g., /api/hassio_ingress/abc123). We use this to construct
+    absolute URLs for API calls in the frontend JavaScript.
+
+    Returns:
+        The ingress base path, or empty string if not behind ingress.
+    """
+    return request.headers.get("X-Ingress-Path", "")
+
+
 def add_route_with_trailing_slash(
     router: web.UrlDispatcher, method: str, path: str, handler: Handler
 ) -> None:
@@ -119,6 +132,7 @@ async def handle_status(request: web.Request) -> web.Response:
         return web.Response(text="Agent not initialized", status=503)
 
     html = STATUS_HTML.format(
+        base_path=get_base_path(request),
         version=agent.VERSION,
         llm_provider=agent._llm.name,
         llm_model=agent._llm.model,
@@ -174,23 +188,29 @@ The ingress proxy is reaching Mímir successfully.
     return web.Response(text=debug_text, content_type="text/plain")
 
 
-async def handle_audit_page(_request: web.Request) -> web.Response:
+async def handle_audit_page(request: web.Request) -> web.Response:
     """Handle GET /audit - Audit log page."""
     # Call .format() to convert doubled braces {{}} to single braces {}
-    return web.Response(text=AUDIT_HTML.format(), content_type="text/html")
+    # and inject base_path for API URLs
+    html = AUDIT_HTML.format(base_path=get_base_path(request))
+    return web.Response(text=html, content_type="text/html")
 
 
-async def handle_git_page(_request: web.Request) -> web.Response:
+async def handle_git_page(request: web.Request) -> web.Response:
     """Handle GET /git - Git history page."""
     # Call .format() to convert doubled braces {{}} to single braces {}
-    return web.Response(text=GIT_HTML.format(), content_type="text/html")
+    # and inject base_path for API URLs
+    html = GIT_HTML.format(base_path=get_base_path(request))
+    return web.Response(text=html, content_type="text/html")
 
 
 async def handle_chat_page(request: web.Request) -> web.Response:
     """Handle GET / or /chat - Chat page (default view for ingress)."""
     logger.info("Serving chat page for path: %s", request.path)
     # Call .format() to convert doubled braces {{}} to single braces {}
-    return web.Response(text=CHAT_HTML.format(), content_type="text/html")
+    # and inject base_path for API URLs
+    html = CHAT_HTML.format(base_path=get_base_path(request))
+    return web.Response(text=html, content_type="text/html")
 
 
 # ============== Chat API ==============

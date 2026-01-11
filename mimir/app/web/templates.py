@@ -39,6 +39,15 @@ def _get_app_version() -> str:
 
 APP_VERSION = _get_app_version()
 
+# JavaScript helper for constructing API URLs with ingress base path
+# This must be included at the start of every page that makes API calls
+BASE_PATH_SCRIPT = """
+<script>
+    const BASE_PATH = '{base_path}';
+    function apiUrl(path) {{ return (BASE_PATH || '') + '/' + path; }}
+</script>
+"""
+
 # Shared CSS styles (braces doubled for .format() compatibility)
 SHARED_STYLES = """
     * {{
@@ -461,6 +470,9 @@ STATUS_HTML = (
     </style>
 </head>
 <body>
+    """
+    + BASE_PATH_SCRIPT
+    + """
     <div class="container">
         <div class="header">
             <h1><span class="header-icon">&#129704;</span> Mimir</h1>
@@ -567,7 +579,7 @@ STATUS_HTML = (
             setTyping(true);
 
             try {{
-                const response = await fetch('./api/chat', {{
+                const response = await fetch(apiUrl('api/chat'), {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ message: message }})
@@ -590,7 +602,7 @@ STATUS_HTML = (
 
         async function loadHistory() {{
             try {{
-                const response = await fetch('./api/chat/history');
+                const response = await fetch(apiUrl('api/chat/history'));
                 const data = await response.json();
                 if (data.history) {{
                     data.history.forEach(msg => addMessage(msg.role, msg.content));
@@ -727,6 +739,9 @@ AUDIT_HTML = (
     </style>
 </head>
 <body>
+    """
+    + BASE_PATH_SCRIPT
+    + """
     <div class="container">
         <div class="header">
             <h1><span class="header-icon">&#128220;</span> Audit Logs</h1>
@@ -807,16 +822,16 @@ AUDIT_HTML = (
             const type = document.getElementById('filterType').value;
             const search = document.getElementById('filterSearch').value;
 
-            let url = `./api/audit?limit=${{pageSize}}&offset=${{currentPage * pageSize}}`;
-            if (source) url += `&source=${{source}}`;
-            if (type) url += `&type=${{type}}`;
-            if (search) url += `&search=${{encodeURIComponent(search)}}`;
+            let path = `api/audit?limit=${{pageSize}}&offset=${{currentPage * pageSize}}`;
+            if (source) path += `&source=${{source}}`;
+            if (type) path += `&type=${{type}}`;
+            if (search) path += `&search=${{encodeURIComponent(search)}}`;
 
             const tbody = document.getElementById('logsTable');
             tbody.innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div> Loading...</td></tr>';
 
             try {{
-                const response = await fetch(url);
+                const response = await fetch(apiUrl(path));
                 const data = await response.json();
 
                 if (!data.logs || data.logs.length === 0) {{
@@ -843,7 +858,7 @@ AUDIT_HTML = (
 
         async function showDetail(id) {{
             try {{
-                const response = await fetch(`./api/audit/${{id}}`);
+                const response = await fetch(apiUrl(`api/audit/${{id}}`));
                 const log = await response.json();
 
                 let html = `
@@ -1041,6 +1056,9 @@ GIT_HTML = (
     </style>
 </head>
 <body>
+    """
+    + BASE_PATH_SCRIPT
+    + """
     <div class="container">
         <div class="header">
             <h1><span class="header-icon">&#128230;</span> Configuration History</h1>
@@ -1123,7 +1141,7 @@ GIT_HTML = (
 
         async function loadStatus() {{
             try {{
-                const response = await fetch('./api/git/status');
+                const response = await fetch(apiUrl('api/git/status'));
                 const data = await response.json();
                 const statusBar = document.getElementById('statusBar');
                 if (data.clean) {{
@@ -1143,7 +1161,7 @@ GIT_HTML = (
             statusBar.innerHTML = '<span class="status-icon"><div class="spinner"></div></span><span class="status-text">Committing changes...</span>';
 
             try {{
-                const response = await fetch('./api/git/commit', {{
+                const response = await fetch(apiUrl('api/git/commit'), {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }}
                 }});
@@ -1172,7 +1190,7 @@ GIT_HTML = (
 
         async function loadBranches() {{
             try {{
-                const response = await fetch('./api/git/branches');
+                const response = await fetch(apiUrl('api/git/branches'));
                 const data = await response.json();
                 const select = document.getElementById('branchSelect');
                 if (!data.branches || data.branches.length === 0) {{
@@ -1192,7 +1210,7 @@ GIT_HTML = (
             container.innerHTML = '<div class="loading"><div class="spinner"></div> Loading commits...</div>';
 
             try {{
-                const response = await fetch('./api/git/commits?limit=20');
+                const response = await fetch(apiUrl('api/git/commits?limit=20'));
                 const data = await response.json();
 
                 if (!data.commits || data.commits.length === 0) {{
@@ -1234,7 +1252,7 @@ GIT_HTML = (
             diffView.classList.add('visible');
 
             try {{
-                const response = await fetch(`./api/git/diff/${{sha}}`);
+                const response = await fetch(apiUrl(`api/git/diff/${{sha}}`));
                 const data = await response.json();
                 diffView.innerHTML = formatDiff(data.diff || 'No changes in this commit');
             }} catch (error) {{
@@ -1245,7 +1263,7 @@ GIT_HTML = (
         async function switchBranch() {{
             const branch = document.getElementById('branchSelect').value;
             try {{
-                await fetch('./api/git/checkout', {{
+                await fetch(apiUrl('api/git/checkout'), {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ branch: branch }})
@@ -1278,7 +1296,7 @@ GIT_HTML = (
             const name = document.getElementById('newBranchName').value.trim();
             if (!name) return;
             try {{
-                await fetch('./api/git/branches', {{
+                await fetch(apiUrl('api/git/branches'), {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ name: name }})
@@ -1293,7 +1311,7 @@ GIT_HTML = (
         async function confirmRollback() {{
             if (!currentRollbackSha) return;
             try {{
-                const response = await fetch('./api/git/rollback', {{
+                const response = await fetch(apiUrl('api/git/rollback'), {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ sha: currentRollbackSha }})
@@ -1555,6 +1573,9 @@ CHAT_HTML = (
     </style>
 </head>
 <body>
+    """
+    + BASE_PATH_SCRIPT
+    + """
     <div class="chat-page">
         <div class="chat-header">
             <h1>&#129704; Mimir</h1>
@@ -1654,7 +1675,7 @@ CHAT_HTML = (
             setTyping(true);
 
             try {{
-                const response = await fetch('./api/chat', {{
+                const response = await fetch(apiUrl('api/chat'), {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{ message: message }})
@@ -1681,7 +1702,7 @@ CHAT_HTML = (
 
         async function loadHistory() {{
             try {{
-                const response = await fetch('./api/chat/history');
+                const response = await fetch(apiUrl('api/chat/history'));
                 const data = await response.json();
                 if (data.history && data.history.length > 0) {{
                     document.getElementById('welcomeMessage').style.display = 'none';
