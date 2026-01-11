@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.36] - 2025-01-11
+
+### Fixed
+
+- Fix 404 errors on API calls in ingress context
+  - Changed all API fetch URLs from `api/` to `./api/`
+  - Ensures proper relative URL resolution when served through HA ingress proxy
+
 ## [0.1.35] - 2025-01-11
 
 ### Fixed
