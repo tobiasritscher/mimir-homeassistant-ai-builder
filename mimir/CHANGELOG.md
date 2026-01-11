@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.22] - 2025-01-11
+
+### Added
+
+- **Conversation memory persistence**: Mímir now remembers conversations after restarts
+  - Loads recent conversation history from audit database on startup
+  - Context is preserved across add-on updates and restarts
+  - No more "I don't have access to previous conversations" responses
+
 ## [0.1.21] - 2025-01-11
 
 ### Fixed

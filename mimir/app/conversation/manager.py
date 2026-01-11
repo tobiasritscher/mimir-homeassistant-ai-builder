@@ -173,6 +173,46 @@ class ConversationManager:
         self._messages.clear()
         logger.debug("Conversation history cleared")
 
+    async def load_history_from_audit(self, limit: int = 20) -> int:
+        """Load conversation history from the audit database.
+
+        This restores context after a restart by loading recent messages
+        from the audit log.
+
+        Args:
+            limit: Maximum number of messages to load.
+
+        Returns:
+            Number of messages loaded.
+        """
+        if not self._audit:
+            logger.debug("No audit repository, skipping history load")
+            return 0
+
+        try:
+            # Get recent user and assistant messages
+            logs = await self._audit.get_recent_logs(limit=limit * 2)
+
+            # Filter to user/assistant messages and reverse to chronological order
+            messages_to_load = []
+            for log in reversed(logs):
+                if log.message_type == "user":
+                    messages_to_load.append(Message.user(log.content))
+                elif log.message_type == "assistant":
+                    messages_to_load.append(Message.assistant(content=log.content))
+
+            # Limit to most recent messages
+            if len(messages_to_load) > limit:
+                messages_to_load = messages_to_load[-limit:]
+
+            self._messages = messages_to_load
+            logger.info("Loaded %d messages from audit history", len(self._messages))
+            return len(self._messages)
+
+        except Exception as e:
+            logger.warning("Failed to load history from audit: %s", e)
+            return 0
+
     def _trim_history(self) -> None:
         """Trim history to max_history messages."""
         if len(self._messages) > self._max_history:

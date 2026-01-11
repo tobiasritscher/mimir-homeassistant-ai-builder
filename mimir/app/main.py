@@ -48,7 +48,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.21"
+    VERSION = "0.1.22"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -279,6 +279,9 @@ class MimirAgent:
             operating_mode=self._config.operating_mode,
             audit_repository=self._audit,
         )
+
+        # Load conversation history from previous sessions
+        await self._conversation_manager.load_history_from_audit()
 
         # Set up tool execution callback for audit logging
         self._tool_registry.set_execution_callback(self._create_tool_execution_callback())
