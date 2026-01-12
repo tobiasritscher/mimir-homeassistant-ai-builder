@@ -2,16 +2,38 @@
 
 **Intelligent Home Assistant Agent with Nordic Wisdom**
 
-Mímir is an AI-powered agent that interfaces with Home Assistant to manage automations, scripts, helpers, scenes, dashboards, and perform log analysis. Named after the Norse god of wisdom, Mímir provides technical guidance with a sardonic wit while maintaining version control of all modifications.
+> **⚠️ ALPHA SOFTWARE**
+>
+> Mímir is in active development. Features may be incomplete, APIs may change, and bugs are expected.
+> Use at your own risk on non-production Home Assistant instances. Please report issues on GitHub.
+
+Mímir is an AI-powered agent that interfaces with Home Assistant to manage automations, analyze logs, and provide technical guidance. Named after the Norse god of wisdom, Mímir maintains version control of all modifications and remembers your preferences across sessions.
 
 ## Features
 
-- **Automation Management**: Create, modify, and delete automations, scripts, scenes, and helpers
-- **Log Analysis**: Analyze Home Assistant logs to identify and explain errors
-- **Version Control**: Automatic Git commits for all configuration changes
-- **Multi-Interface**: Communicate via Telegram or the built-in Home Assistant panel
-- **Model Agnostic**: Supports Anthropic Claude, OpenAI, Google Gemini, Azure AI, Ollama, and vLLM
-- **Web Research**: Search documentation and forums for solutions
+### ✅ Implemented
+
+- **Automation Management**: Create, modify, delete, and inspect automations
+- **Script Management**: Create, modify, delete scripts
+- **Scene Management**: Create, modify, delete scenes
+- **Helper Management**: Create and manage input helpers (boolean, number, text, select, counter)
+- **Log Analysis**: Analyze Home Assistant error logs and entity history
+- **Version Control**: Automatic Git commits for all configuration changes with rollback support
+- **Multi-Interface**: Communicate via Telegram or the built-in Home Assistant sidebar panel
+- **Long-term Memory**: Mímir remembers facts you tell it across restarts
+- **User Context**: Knows who it's talking to and adapts to preferences
+- **Web Research**: Search Home Assistant docs, forums, and HACS for solutions
+- **Audit Trail**: Full logging of all conversations and tool executions
+
+### ✅ Also Implemented
+
+- **LLM Providers**: Anthropic Claude and OpenAI GPT
+- **Rate Limiting**: Configurable limits on destructive actions per hour
+
+### 🚧 Planned / In Progress
+
+- **Additional LLM Providers**: Google Gemini, Azure AI, Ollama, vLLM
+- **Operating Mode Enforcement**: Chat/Normal/YOLO mode restrictions
 
 ## Installation
 
@@ -28,12 +50,17 @@ Mímir is an AI-powered agent that interfaces with Home Assistant to manage auto
 ### Configuration
 
 ```yaml
-llm_provider: anthropic
-llm_api_key: your-api-key
-llm_model: claude-sonnet-4-20250514
-telegram_owner_id: 123456789
+llm_provider: anthropic           # 'anthropic' or 'openai'
+llm_api_key: your-api-key         # Your API key
+llm_model: claude-sonnet-4-20250514  # Or gpt-4o for OpenAI
+telegram_owner_id: 123456789      # Your Telegram user ID
+operating_mode: normal            # chat, normal, or yolo
+deletions_per_hour: 5             # Rate limit for deletions
+modifications_per_hour: 20        # Rate limit for modifications
 debug: false
 ```
+
+See [DOCS.md](mimir/DOCS.md) for full configuration options.
 
 ## Usage
 
@@ -97,7 +124,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting PRs.
 
 ## Acknowledgments
 

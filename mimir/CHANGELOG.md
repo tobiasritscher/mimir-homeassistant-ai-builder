@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.39] - 2025-01-12
+
+### Added
+
+- **Script CRUD tools**: Full management of Home Assistant scripts
+  - `get_scripts` - List all scripts with status
+  - `get_script_config` - Get full YAML configuration
+  - `create_script` - Create new scripts
+  - `update_script` - Update existing scripts
+  - `delete_script` - Delete scripts
+
+- **Scene CRUD tools**: Full management of scenes
+  - `get_scenes` - List all scenes
+  - `get_scene_config` - Get scene configuration
+  - `create_scene` - Create new scenes
+  - `update_scene` - Update existing scenes
+  - `delete_scene` - Delete scenes
+
+- **Helper CRUD tools**: Create and manage input helpers
+  - `get_helpers` - List all helpers (input_boolean, input_number, etc.)
+  - `create_helper` - Create new helpers
+  - `delete_helper` - Delete helpers
+
+- **Rate limiting**: Protect against runaway modifications
+  - Configurable `deletions_per_hour` (default: 5)
+  - Configurable `modifications_per_hour` (default: 20)
+  - Sliding 1-hour window tracking
+  - Disabled in YOLO mode
+
+- **OpenAI LLM provider**: Support for GPT models
+  - GPT-4o, GPT-4-turbo, GPT-3.5-turbo
+  - Custom base URL support for Azure/compatible APIs
+
+- **GitHub issue templates**: Bug reports and feature requests
+
+- **Expanded documentation**: Comprehensive DOCS.md with all features
+
+- **CONTRIBUTING.md**: Guidelines for contributors
+
+### Changed
+
+- **README.md**: Added alpha warning, documented implemented vs planned features
+- **HA_GITIGNORE**: Expanded to cover more noisy/sensitive files
+  - Added `cloud/`, `www/community/`, `zigbee2mqtt/` patterns
+  - Added more `.storage/` entries
+
 ## [0.1.38] - 2025-01-11
 
 ### Added

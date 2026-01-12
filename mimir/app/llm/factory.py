@@ -8,6 +8,7 @@ from ..config import LLMConfig
 from ..config import LLMProvider as LLMProviderEnum
 from ..utils.logging import get_logger
 from .anthropic import AnthropicProvider
+from .openai import OpenAIProvider
 
 if TYPE_CHECKING:
     from .base import LLMProvider
@@ -45,8 +46,12 @@ def create_provider(config: LLMConfig) -> LLMProvider:
             )
 
         case LLMProviderEnum.OPENAI:
-            raise UnsupportedProviderError(
-                "OpenAI provider is not yet implemented. Coming in Phase 6."
+            return OpenAIProvider(
+                api_key=config.api_key.get_secret_value(),
+                model=config.model,
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
+                base_url=config.base_url,
             )
 
         case LLMProviderEnum.GEMINI:

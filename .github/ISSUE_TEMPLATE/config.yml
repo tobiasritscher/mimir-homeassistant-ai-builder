@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/tobiasritscher/mimir-homeassistant-ai-builder/blob/main/mimir/DOCS.md
+    about: Check the documentation before opening an issue
+  - name: Home Assistant Community
+    url: https://community.home-assistant.io/
+    about: For general Home Assistant questions

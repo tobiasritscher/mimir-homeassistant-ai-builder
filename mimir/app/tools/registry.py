@@ -7,6 +7,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 from ..utils.logging import get_logger
+from ..utils.rate_limiter import RateLimiter, get_operation_type
 
 if TYPE_CHECKING:
     from ..llm.types import Tool as LLMTool
@@ -27,6 +28,12 @@ class ToolNotFoundError(Exception):
     pass
 
 
+class RateLimitError(Exception):
+    """Raised when a rate limit is exceeded."""
+
+    pass
+
+
 class ToolRegistry:
     """Registry for managing available tools.
 
@@ -39,6 +46,8 @@ class ToolRegistry:
         """Initialize an empty tool registry."""
         self._tools: dict[str, BaseTool] = {}
         self._on_execute: ExecutionCallback | None = None
+        self._rate_limiter: RateLimiter | None = None
+        self._rate_limiting_enabled: bool = True
 
     def set_execution_callback(self, callback: ExecutionCallback | None) -> None:
         """Set a callback to be called after each tool execution.
@@ -51,6 +60,53 @@ class ToolRegistry:
         self._on_execute = callback
         if callback:
             logger.debug("Tool execution callback registered")
+
+    def configure_rate_limiter(
+        self,
+        deletions_per_hour: int = 5,
+        modifications_per_hour: int = 20,
+        enabled: bool = True,
+    ) -> None:
+        """Configure rate limiting for tool executions.
+
+        Args:
+            deletions_per_hour: Max deletions allowed per hour.
+            modifications_per_hour: Max modifications allowed per hour.
+            enabled: Whether rate limiting is enabled.
+        """
+        self._rate_limiter = RateLimiter(
+            deletions_per_hour=deletions_per_hour,
+            modifications_per_hour=modifications_per_hour,
+        )
+        self._rate_limiting_enabled = enabled
+        logger.info(
+            "Rate limiter configured: %d deletions/hour, %d modifications/hour, enabled=%s",
+            deletions_per_hour,
+            modifications_per_hour,
+            enabled,
+        )
+
+    def disable_rate_limiting(self) -> None:
+        """Temporarily disable rate limiting (e.g., for YOLO mode)."""
+        self._rate_limiting_enabled = False
+        logger.info("Rate limiting disabled")
+
+    def enable_rate_limiting(self) -> None:
+        """Re-enable rate limiting."""
+        self._rate_limiting_enabled = True
+        logger.info("Rate limiting enabled")
+
+    def get_rate_limit_status(self) -> dict[str, Any]:
+        """Get current rate limit status.
+
+        Returns:
+            Dict with rate limit status, or empty dict if not configured.
+        """
+        if not self._rate_limiter:
+            return {}
+        status = self._rate_limiter.get_status()
+        status["enabled"] = self._rate_limiting_enabled
+        return status
 
     def register(self, tool: BaseTool) -> None:
         """Register a tool.
@@ -135,6 +191,18 @@ class ToolRegistry:
         tool = self.get(name)
         logger.info("Executing tool: %s", name)
 
+        # Check rate limits before executing
+        operation_type = get_operation_type(name)
+        if (
+            operation_type
+            and self._rate_limiter
+            and self._rate_limiting_enabled
+        ):
+            allowed, message = self._rate_limiter.check_allowed(operation_type)
+            if not allowed:
+                logger.warning("Rate limit exceeded for tool %s: %s", name, message)
+                return f"Error: {message}"
+
         start_time = time.monotonic()
         result: str | None = None
         error_msg: str | None = None
@@ -144,6 +212,11 @@ class ToolRegistry:
             result = await tool.validate_and_execute(**kwargs)
             success = not result.startswith("Error:") if result else True
             logger.debug("Tool %s returned: %s...", name, result[:100] if result else "")
+
+            # Record successful operation for rate limiting
+            if success and operation_type and self._rate_limiter:
+                self._rate_limiter.record_operation(operation_type)
+
         except Exception as e:
             logger.exception("Tool %s failed: %s", name, e)
             error_msg = str(e)

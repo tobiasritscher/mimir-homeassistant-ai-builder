@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from aiohttp import web
 
-from .config import load_config
+from .config import OperatingMode, load_config
 from .conversation.manager import ConversationManager
 from .db import AuditRepository, Database, MemoryRepository
 from .git import GitManager
@@ -24,15 +24,28 @@ from .telegram.handler import TelegramHandler
 from .tools.ha_tools import (
     CallServiceTool,
     CreateAutomationTool,
+    CreateHelperTool,
+    CreateSceneTool,
+    CreateScriptTool,
     DeleteAutomationTool,
+    DeleteHelperTool,
+    DeleteSceneTool,
+    DeleteScriptTool,
     GetAutomationConfigTool,
     GetAutomationsTool,
     GetEntitiesTool,
     GetEntityStateTool,
     GetErrorLogTool,
+    GetHelpersTool,
     GetLogbookTool,
+    GetSceneConfigTool,
+    GetScenesTool,
+    GetScriptConfigTool,
+    GetScriptsTool,
     GetServicesTool,
     UpdateAutomationTool,
+    UpdateSceneTool,
+    UpdateScriptTool,
 )
 from .tools.memory_tools import ForgetMemoryTool, RecallMemoriesTool, StoreMemoryTool
 from .tools.registry import ToolRegistry
@@ -51,7 +64,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.38"
+    VERSION = "0.1.39"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -95,18 +108,39 @@ class MimirAgent:
         self._tool_registry.register(HomeAssistantDocsSearchTool())
         self._tool_registry.register(HACSSearchTool())
 
-        # Home Assistant tools
+        # Home Assistant entity tools
         self._tool_registry.register(GetEntitiesTool(self._ha_api))
         self._tool_registry.register(GetEntityStateTool(self._ha_api))
+        self._tool_registry.register(CallServiceTool(self._ha_api))
+        self._tool_registry.register(GetServicesTool(self._ha_api))
+        self._tool_registry.register(GetErrorLogTool(self._ha_api))
+        self._tool_registry.register(GetLogbookTool(self._ha_api))
+
+        # Automation tools
         self._tool_registry.register(GetAutomationsTool(self._ha_api))
         self._tool_registry.register(GetAutomationConfigTool(self._ha_api))
         self._tool_registry.register(CreateAutomationTool(self._ha_api))
         self._tool_registry.register(UpdateAutomationTool(self._ha_api))
         self._tool_registry.register(DeleteAutomationTool(self._ha_api))
-        self._tool_registry.register(CallServiceTool(self._ha_api))
-        self._tool_registry.register(GetServicesTool(self._ha_api))
-        self._tool_registry.register(GetErrorLogTool(self._ha_api))
-        self._tool_registry.register(GetLogbookTool(self._ha_api))
+
+        # Script tools
+        self._tool_registry.register(GetScriptsTool(self._ha_api))
+        self._tool_registry.register(GetScriptConfigTool(self._ha_api))
+        self._tool_registry.register(CreateScriptTool(self._ha_api))
+        self._tool_registry.register(UpdateScriptTool(self._ha_api))
+        self._tool_registry.register(DeleteScriptTool(self._ha_api))
+
+        # Scene tools
+        self._tool_registry.register(GetScenesTool(self._ha_api))
+        self._tool_registry.register(GetSceneConfigTool(self._ha_api))
+        self._tool_registry.register(CreateSceneTool(self._ha_api))
+        self._tool_registry.register(UpdateSceneTool(self._ha_api))
+        self._tool_registry.register(DeleteSceneTool(self._ha_api))
+
+        # Helper tools
+        self._tool_registry.register(GetHelpersTool(self._ha_api))
+        self._tool_registry.register(CreateHelperTool(self._ha_api))
+        self._tool_registry.register(DeleteHelperTool(self._ha_api))
 
         logger.info("Registered %d tools", len(self._tool_registry))
 
@@ -299,6 +333,13 @@ class MimirAgent:
 
         # Set up tool execution callback for audit logging
         self._tool_registry.set_execution_callback(self._create_tool_execution_callback())
+
+        # Configure rate limiting
+        self._tool_registry.configure_rate_limiter(
+            deletions_per_hour=self._config.deletions_per_hour,
+            modifications_per_hour=self._config.modifications_per_hour,
+            enabled=self._config.operating_mode != OperatingMode.YOLO,
+        )
 
         # Initialize Telegram handler
         self._telegram_handler = TelegramHandler(

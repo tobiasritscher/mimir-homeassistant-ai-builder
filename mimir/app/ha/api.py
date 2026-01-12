@@ -296,6 +296,184 @@ class HomeAssistantAPI:
         result: dict[str, Any] = await self.delete(f"config/automation/config/{automation_id}")
         return result
 
+    # Script CRUD operations
+
+    async def get_script_config(self, script_id: str) -> dict[str, Any]:
+        """Get the configuration of a script.
+
+        Args:
+            script_id: The script ID (without 'script.' prefix).
+
+        Returns:
+            The script configuration dict.
+        """
+        if script_id.startswith("script."):
+            script_id = script_id[7:]
+
+        result: dict[str, Any] = await self.get(f"config/script/config/{script_id}")
+        return result
+
+    async def create_script(
+        self,
+        script_id: str,
+        config: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create or update a script.
+
+        Args:
+            script_id: The script ID (without 'script.' prefix).
+            config: The script configuration (alias, sequence, etc.).
+
+        Returns:
+            The result of the operation.
+        """
+        if script_id.startswith("script."):
+            script_id = script_id[7:]
+
+        logger.info("Creating/updating script: %s", script_id)
+        result: dict[str, Any] = await self.post(
+            f"config/script/config/{script_id}",
+            config,
+        )
+        return result
+
+    async def delete_script(self, script_id: str) -> dict[str, Any]:
+        """Delete a script.
+
+        Args:
+            script_id: The script ID (without 'script.' prefix).
+
+        Returns:
+            The result of the operation.
+        """
+        if script_id.startswith("script."):
+            script_id = script_id[7:]
+
+        logger.info("Deleting script: %s", script_id)
+        result: dict[str, Any] = await self.delete(f"config/script/config/{script_id}")
+        return result
+
+    # Scene CRUD operations
+
+    async def get_scene_config(self, scene_id: str) -> dict[str, Any]:
+        """Get the configuration of a scene.
+
+        Args:
+            scene_id: The scene ID (without 'scene.' prefix).
+
+        Returns:
+            The scene configuration dict.
+        """
+        if scene_id.startswith("scene."):
+            scene_id = scene_id[6:]
+
+        result: dict[str, Any] = await self.get(f"config/scene/config/{scene_id}")
+        return result
+
+    async def create_scene(
+        self,
+        scene_id: str,
+        config: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create or update a scene.
+
+        Args:
+            scene_id: The scene ID (without 'scene.' prefix).
+            config: The scene configuration (name, entities, etc.).
+
+        Returns:
+            The result of the operation.
+        """
+        if scene_id.startswith("scene."):
+            scene_id = scene_id[6:]
+
+        logger.info("Creating/updating scene: %s", scene_id)
+        result: dict[str, Any] = await self.post(
+            f"config/scene/config/{scene_id}",
+            config,
+        )
+        return result
+
+    async def delete_scene(self, scene_id: str) -> dict[str, Any]:
+        """Delete a scene.
+
+        Args:
+            scene_id: The scene ID (without 'scene.' prefix).
+
+        Returns:
+            The result of the operation.
+        """
+        if scene_id.startswith("scene."):
+            scene_id = scene_id[6:]
+
+        logger.info("Deleting scene: %s", scene_id)
+        result: dict[str, Any] = await self.delete(f"config/scene/config/{scene_id}")
+        return result
+
+    # Helper CRUD operations (input_boolean, input_number, input_text, etc.)
+
+    async def get_helper_config(self, helper_type: str, helper_id: str) -> dict[str, Any]:
+        """Get the configuration of a helper.
+
+        Args:
+            helper_type: The helper type (input_boolean, input_number, etc.).
+            helper_id: The helper ID (without the type prefix).
+
+        Returns:
+            The helper configuration dict.
+        """
+        prefix = f"{helper_type}."
+        if helper_id.startswith(prefix):
+            helper_id = helper_id[len(prefix) :]
+
+        result: dict[str, Any] = await self.get(f"config/{helper_type}/config/{helper_id}")
+        return result
+
+    async def create_helper(
+        self,
+        helper_type: str,
+        helper_id: str,
+        config: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create or update a helper.
+
+        Args:
+            helper_type: The helper type (input_boolean, input_number, etc.).
+            helper_id: The helper ID (without the type prefix).
+            config: The helper configuration.
+
+        Returns:
+            The result of the operation.
+        """
+        prefix = f"{helper_type}."
+        if helper_id.startswith(prefix):
+            helper_id = helper_id[len(prefix) :]
+
+        logger.info("Creating/updating helper: %s.%s", helper_type, helper_id)
+        result: dict[str, Any] = await self.post(
+            f"config/{helper_type}/config/{helper_id}",
+            config,
+        )
+        return result
+
+    async def delete_helper(self, helper_type: str, helper_id: str) -> dict[str, Any]:
+        """Delete a helper.
+
+        Args:
+            helper_type: The helper type (input_boolean, input_number, etc.).
+            helper_id: The helper ID (without the type prefix).
+
+        Returns:
+            The result of the operation.
+        """
+        prefix = f"{helper_type}."
+        if helper_id.startswith(prefix):
+            helper_id = helper_id[len(prefix) :]
+
+        logger.info("Deleting helper: %s.%s", helper_type, helper_id)
+        result: dict[str, Any] = await self.delete(f"config/{helper_type}/config/{helper_id}")
+        return result
+
     async def close(self) -> None:
         """Close the API session."""
         if self._session and not self._session.closed:

@@ -22,6 +22,7 @@ HA_GITIGNORE = """# ===========================================
 .storage/auth_provider.*
 .storage/onboarding
 .cloud/
+cloud/
 secrets.yaml
 *.pem
 *.key
@@ -43,11 +44,16 @@ home-assistant.log*
 .storage/bluetooth.*
 .storage/backup
 .storage/core.restore_state*
+.storage/core.entity_registry
+.storage/core.device_registry
+.storage/core.area_registry
+.storage/core.config_entries
 .storage/browser_mod*
 .storage/hacs*
 .storage/http*
 .storage/image.*
 .storage/lovelace*
+.storage/lovelace_resources
 .storage/mobile_app*
 .storage/person
 .storage/trace*
@@ -55,6 +61,19 @@ home-assistant.log*
 .storage/energy*
 .storage/assist_pipeline*
 .storage/conversation*
+.storage/network*
+.storage/zha*
+.storage/websocket_api*
+
+# ============ HACS & Community ============
+# HACS-installed integrations and frontend
+www/community/
+custom_components/hacs/
+
+# ============ Zigbee2MQTT ============
+zigbee2mqtt/state.json
+zigbee2mqtt/coordinator_backup.json
+zigbee2mqtt/log/
 
 # ============ Cache & Temp ============
 __pycache__/
