@@ -46,7 +46,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run mypy
-        run: mypy mimir/app
+        run: mypy mimir/app --ignore-missing-imports
 
   test:
     name: Test

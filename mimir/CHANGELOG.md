@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.45] - 2025-01-12
+
+### Fixed
+
+- Fix CI mypy command to use `--ignore-missing-imports` flag
+  - Optional dependencies (openai, google-generativeai) aren't installed in CI
+
 ## [0.1.44] - 2025-01-12
 
 ### Fixed
