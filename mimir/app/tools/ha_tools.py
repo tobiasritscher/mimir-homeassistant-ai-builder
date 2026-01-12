@@ -1513,7 +1513,11 @@ class GetHelpersTool(BaseTool):
                     return f"Error: Unknown helper type '{helper_type}'. Valid types: {', '.join(helper_domains)}"
                 helpers = [s for s in states if s.entity_id.startswith(f"{helper_type}.")]
             else:
-                helpers = [s for s in states if any(s.entity_id.startswith(f"{d}.") for d in helper_domains)]
+                helpers = [
+                    s
+                    for s in states
+                    if any(s.entity_id.startswith(f"{d}.") for d in helper_domains)
+                ]
 
             # Filter by search term
             if search:
@@ -1706,7 +1710,15 @@ class DeleteHelperTool(BaseTool):
         if not entity_id:
             return "Error: entity_id is required."
 
-        valid_types = ["input_boolean", "input_number", "input_text", "input_select", "input_datetime", "counter", "timer"]
+        valid_types = [
+            "input_boolean",
+            "input_number",
+            "input_text",
+            "input_select",
+            "input_datetime",
+            "counter",
+            "timer",
+        ]
 
         # Determine helper type from entity_id
         helper_type = None
@@ -1719,7 +1731,7 @@ class DeleteHelperTool(BaseTool):
             return f"Error: entity_id must start with one of: {', '.join(valid_types)}"
 
         try:
-            helper_id = entity_id[len(helper_type) + 1:]  # Remove type prefix
+            helper_id = entity_id[len(helper_type) + 1 :]  # Remove type prefix
             await self._ha_api.delete_helper(helper_type, helper_id)
 
             # Reload the helper domain
@@ -1779,7 +1791,7 @@ class RenameEntityTool(BaseTool):
             return "Error: entity_id and new_name are required."
 
         try:
-            result = await self._ha_api.update_entity_registry(
+            await self._ha_api.update_entity_registry(
                 entity_id=entity_id,
                 name=new_name,
             )
@@ -1836,13 +1848,13 @@ class AssignEntityAreaTool(BaseTool):
         try:
             # If area_id is empty string, we clear the area
             if area_id == "":
-                result = await self._ha_api.update_entity_registry(
+                await self._ha_api.update_entity_registry(
                     entity_id=entity_id,
                     area_id="",  # This clears the area
                 )
                 return f"Entity '{entity_id}' removed from its area."
             else:
-                result = await self._ha_api.update_entity_registry(
+                await self._ha_api.update_entity_registry(
                     entity_id=entity_id,
                     area_id=area_id,
                 )
@@ -1900,7 +1912,7 @@ class AssignEntityLabelsTool(BaseTool):
             return "Error: labels must be a list of strings."
 
         try:
-            result = await self._ha_api.update_entity_registry(
+            await self._ha_api.update_entity_registry(
                 entity_id=entity_id,
                 labels=labels,
             )
@@ -1940,7 +1952,7 @@ class GetAreasTool(BaseTool):
             "required": [],
         }
 
-    async def execute(self, **kwargs: Any) -> str:
+    async def execute(self, **kwargs: Any) -> str:  # noqa: ARG002
         try:
             areas = await self._ha_api.get_areas()
 
@@ -1987,7 +1999,7 @@ class GetLabelsTool(BaseTool):
             "required": [],
         }
 
-    async def execute(self, **kwargs: Any) -> str:
+    async def execute(self, **kwargs: Any) -> str:  # noqa: ARG002
         try:
             labels = await self._ha_api.get_labels()
 

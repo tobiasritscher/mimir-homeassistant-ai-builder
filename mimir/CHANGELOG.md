@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.42] - 2025-01-12
+
+### Fixed
+
+- Fix ruff lint and type check errors in CI pipeline
+  - Remove unused imports (json, timedelta, OperatingMode, is_write_operation)
+  - Remove unused variables (result, now)
+  - Fix import sorting in main.py
+  - Use ternary operator in gemini.py
+  - Use contextlib.suppress in notifications/manager.py
+  - Combine nested if statements in mode_manager.py
+  - Add noqa comments for intentional type-checking imports
+  - Format all files with ruff
+
 ## [0.1.41] - 2025-01-12
 
 ### Fixed

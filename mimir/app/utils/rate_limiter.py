@@ -49,8 +49,6 @@ class RateLimiter:
         Returns:
             Tuple of (allowed, message). If not allowed, message explains why.
         """
-        now = time.time()
-
         if operation_type == OperationType.DELETION:
             self._cleanup_old_entries(self._deletion_times)
             current_count = len(self._deletion_times)

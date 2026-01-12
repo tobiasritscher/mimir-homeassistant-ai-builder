@@ -22,8 +22,6 @@ from .ha.websocket import HomeAssistantWebSocket
 from .llm.factory import create_provider
 from .notifications import NotificationManager
 from .telegram.handler import TelegramHandler
-from .utils.mode_manager import ModeManager
-from .utils.mode_manager import OperatingMode as ModeEnum
 from .tools.ha_tools import (
     AssignEntityAreaTool,
     AssignEntityLabelsTool,
@@ -59,6 +57,8 @@ from .tools.memory_tools import ForgetMemoryTool, RecallMemoriesTool, StoreMemor
 from .tools.registry import ToolRegistry
 from .tools.web_search import HACSSearchTool, HomeAssistantDocsSearchTool, WebSearchTool
 from .utils.logging import get_logger, setup_logging
+from .utils.mode_manager import ModeManager
+from .utils.mode_manager import OperatingMode as ModeEnum
 from .web import request_logger_middleware, setup_routes
 
 if TYPE_CHECKING:
@@ -72,7 +72,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.41"
+    VERSION = "0.1.42"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""

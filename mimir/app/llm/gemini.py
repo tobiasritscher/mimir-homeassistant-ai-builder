@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, Any
 
 import google.generativeai as genai
@@ -294,10 +293,7 @@ class GeminiProvider(LLMProvider):
                     yield ResponseChunk(delta_tool_call=tool_call)
 
         # Determine stop reason
-        if tool_calls:
-            stop_reason = StopReason.TOOL_USE
-        else:
-            stop_reason = StopReason.END_TURN
+        stop_reason = StopReason.TOOL_USE if tool_calls else StopReason.END_TURN
 
         # Yield final response
         yield ResponseChunk(

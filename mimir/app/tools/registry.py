@@ -7,7 +7,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 from ..utils.logging import get_logger
-from ..utils.mode_manager import ModeManager, OperatingMode, is_write_operation
+from ..utils.mode_manager import ModeManager  # noqa: TC001
 from ..utils.rate_limiter import RateLimiter, get_operation_type
 
 if TYPE_CHECKING:
@@ -222,11 +222,7 @@ class ToolRegistry:
 
         # Check rate limits before executing
         operation_type = get_operation_type(name)
-        if (
-            operation_type
-            and self._rate_limiter
-            and self._rate_limiting_enabled
-        ):
+        if operation_type and self._rate_limiter and self._rate_limiting_enabled:
             allowed, message = self._rate_limiter.check_allowed(operation_type)
             if not allowed:
                 logger.warning("Rate limit exceeded for tool %s: %s", name, message)

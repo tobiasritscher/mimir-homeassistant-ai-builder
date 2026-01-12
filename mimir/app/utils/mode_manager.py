@@ -5,16 +5,14 @@ Manages operating modes (Chat, Normal, YOLO) with YOLO timer support.
 
 from __future__ import annotations
 
-import asyncio
+import asyncio  # noqa: TC003
 import time
+from collections.abc import Callable  # noqa: TC003
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any
 
 from ..utils.logging import get_logger
-
-if TYPE_CHECKING:
-    pass
 
 logger = get_logger(__name__)
 
@@ -119,13 +117,12 @@ class ModeManager:
     @property
     def current_mode(self) -> OperatingMode:
         """Get the current operating mode, checking YOLO expiry."""
-        if self._current_mode == OperatingMode.YOLO:
-            if self._is_yolo_expired():
-                logger.info("YOLO mode has expired, reverting to Normal mode")
-                self._current_mode = OperatingMode.NORMAL
-                self._yolo_activated_at = None
-                if self._mode_change_callback:
-                    self._mode_change_callback(OperatingMode.NORMAL)
+        if self._current_mode == OperatingMode.YOLO and self._is_yolo_expired():
+            logger.info("YOLO mode has expired, reverting to Normal mode")
+            self._current_mode = OperatingMode.NORMAL
+            self._yolo_activated_at = None
+            if self._mode_change_callback:
+                self._mode_change_callback(OperatingMode.NORMAL)
         return self._current_mode
 
     @property
@@ -149,9 +146,7 @@ class ModeManager:
         elapsed = time.time() - self._yolo_activated_at
         return elapsed >= (self.yolo_duration_minutes * 60)
 
-    def set_mode_change_callback(
-        self, callback: Callable[[OperatingMode], None] | None
-    ) -> None:
+    def set_mode_change_callback(self, callback: Callable[[OperatingMode], None] | None) -> None:
         """Set a callback for mode changes.
 
         Args:

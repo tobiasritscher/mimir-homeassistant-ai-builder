@@ -6,9 +6,10 @@ Monitors Home Assistant for issues and notifies users via Telegram.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -44,13 +45,13 @@ class DetectedIssue:
     def notification_text(self) -> str:
         """Format the issue for notification."""
         priority_emoji = {
-            NotificationPriority.LOW: "ℹ️",
+            NotificationPriority.LOW: "ℹ️",  # noqa: RUF001
             NotificationPriority.MEDIUM: "⚠️",
             NotificationPriority.HIGH: "🔴",
             NotificationPriority.CRITICAL: "🚨",
         }
 
-        emoji = priority_emoji.get(self.priority, "ℹ️")
+        emoji = priority_emoji.get(self.priority, "ℹ️")  # noqa: RUF001
         text = f"{emoji} **{self.issue_type}**\n\n{self.message}"
 
         if self.entity_id:
@@ -122,10 +123,8 @@ class NotificationManager:
         self._running = False
         if self._monitor_task:
             self._monitor_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._monitor_task
-            except asyncio.CancelledError:
-                pass
             self._monitor_task = None
         logger.info("Proactive notification manager stopped")
 
@@ -268,7 +267,11 @@ class NotificationManager:
             else:
                 # Many entities unavailable - might be a bigger issue
                 entity_list = "\n".join(f"- `{e}`" for e in newly_unavailable[:10])
-                more = f"\n... and {len(newly_unavailable) - 10} more" if len(newly_unavailable) > 10 else ""
+                more = (
+                    f"\n... and {len(newly_unavailable) - 10} more"
+                    if len(newly_unavailable) > 10
+                    else ""
+                )
                 issues.append(
                     DetectedIssue(
                         issue_type="Multiple Entities Unavailable",
