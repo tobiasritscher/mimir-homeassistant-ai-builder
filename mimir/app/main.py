@@ -72,7 +72,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.40"
+    VERSION = "0.1.41"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""

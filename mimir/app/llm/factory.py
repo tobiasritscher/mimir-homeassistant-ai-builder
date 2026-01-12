@@ -8,7 +8,6 @@ from ..config import LLMConfig
 from ..config import LLMProvider as LLMProviderEnum
 from ..utils.logging import get_logger
 from .anthropic import AnthropicProvider
-from .openai import OpenAIProvider
 
 if TYPE_CHECKING:
     from .base import LLMProvider
@@ -46,6 +45,8 @@ def create_provider(config: LLMConfig) -> LLMProvider:
             )
 
         case LLMProviderEnum.OPENAI:
+            from .openai import OpenAIProvider
+
             return OpenAIProvider(
                 api_key=config.api_key.get_secret_value(),
                 model=config.model,
@@ -65,6 +66,8 @@ def create_provider(config: LLMConfig) -> LLMProvider:
             )
 
         case LLMProviderEnum.AZURE:
+            from .openai import OpenAIProvider
+
             # Azure uses the OpenAI provider with a custom base URL
             if not config.base_url:
                 raise UnsupportedProviderError(

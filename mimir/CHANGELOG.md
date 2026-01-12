@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.41] - 2025-01-12
+
+### Fixed
+
+- Fix startup crash when `openai` module not installed
+  - Changed to lazy imports for all LLM providers
+  - OpenAI, Gemini, Azure, Ollama, vLLM only imported when selected
+
 ## [0.1.40] - 2025-01-12
 
 ### Added
