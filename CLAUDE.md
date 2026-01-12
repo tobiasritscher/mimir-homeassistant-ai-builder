@@ -136,6 +136,99 @@ The add-on runs in a Docker container. For local testing:
 - `tools/registry.py` - Tool execution with mode/rate enforcement
 - `config.yaml` - Add-on options schema (what users configure)
 
+## Release Process
+
+### Pre-Release Checklist
+
+1. **Run Linting** (matches CI `lint` job)
+   ```bash
+   cd mimir
+   ruff check app/
+   ruff format --check app/
+   ```
+   Fix any issues before proceeding.
+
+2. **Run Type Checking** (matches CI `typecheck` job)
+   ```bash
+   cd mimir
+   mypy app/ --ignore-missing-imports
+   ```
+   Fix any type errors before proceeding.
+
+3. **Run Tests** (matches CI `test` job)
+   ```bash
+   cd mimir
+   pytest tests/ -v
+   ```
+   All tests must pass.
+
+### Version Bump (all 3 places!)
+
+1. **`mimir/app/main.py`** - Update `MimirAgent.VERSION`:
+   ```python
+   VERSION = "0.1.42"  # bump this
+   ```
+
+2. **`mimir/config.yaml`** - Update `version` field:
+   ```yaml
+   version: "0.1.42"  # bump this
+   ```
+
+3. **`mimir/CHANGELOG.md`** - Add new version section:
+   ```markdown
+   ## [0.1.42] - YYYY-MM-DD
+
+   ### Added
+   - New feature description
+
+   ### Changed
+   - Change description
+
+   ### Fixed
+   - Bug fix description
+   ```
+
+### Commit and Push
+
+```bash
+git add -A
+git commit -m "$(cat <<'EOF'
+v0.1.42: Brief description
+
+- Bullet points for details
+- More details
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+EOF
+)"
+git push origin main
+```
+
+### Wait for CI
+
+After pushing, wait for GitHub Actions to complete:
+- **lint**: ruff check and format
+- **typecheck**: mypy
+- **test**: pytest
+- **build-addon**: Docker build
+
+Check status at: https://github.com/tobiasritscher/mimir-homeassistant-ai-builder/actions
+
+### Home Assistant Add-on Update
+
+Users update the add-on via:
+1. Home Assistant → Settings → Add-ons → Mimir
+2. Click "Update" if available
+3. **Important**: After update, must "Rebuild" not just "Restart" for code changes to take effect
+
+The version shown in HA comes from `config.yaml`. Home Assistant checks for updates by comparing the `version` field against what's installed.
+
+### Post-Release Verification
+
+1. Check add-on logs for startup errors
+2. Test chat interface works
+3. Verify new features function correctly
+
 ## Commit Messages
 
 Follow conventional format:
@@ -147,3 +240,16 @@ v0.1.XX: Brief description
 
 Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
+
+## CI Pipeline
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
+
+| Job | Command | Purpose |
+|-----|---------|---------|
+| lint | `ruff check app/` + `ruff format --check app/` | Code style |
+| typecheck | `mypy app/ --ignore-missing-imports` | Type safety |
+| test | `pytest tests/ -v` | Unit tests |
+| build-addon | `docker build` | Verify container builds |
+
+All jobs must pass before merging/deploying.
