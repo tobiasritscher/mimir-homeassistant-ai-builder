@@ -72,7 +72,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.42"
+    VERSION = "0.1.43"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -345,10 +345,12 @@ class MimirAgent:
             return
 
         # Initialize conversation manager with audit, memory, and mode manager
+        # Convert config.OperatingMode to mode_manager.OperatingMode
+        operating_mode = ModeEnum(self._config.operating_mode.value)
         self._conversation_manager = ConversationManager(
             llm=self._llm,
             tool_registry=self._tool_registry,
-            operating_mode=self._config.operating_mode,
+            operating_mode=operating_mode,
             mode_manager=self._mode_manager,
             audit_repository=self._audit,
             memory_repository=self._memory,

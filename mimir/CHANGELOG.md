@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.43] - 2025-01-12
+
+### Fixed
+
+- Fix mypy type check errors
+  - Add explicit type annotations in gemini.py for `parts` and `declaration` variables
+  - Add explicit `return None` in conversation/manager.py `_check_mode_command`
+  - Convert config.OperatingMode to mode_manager.OperatingMode in main.py
+
 ## [0.1.42] - 2025-01-12
 
 ### Fixed

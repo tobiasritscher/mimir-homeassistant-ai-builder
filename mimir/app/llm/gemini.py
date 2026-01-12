@@ -91,7 +91,7 @@ class GeminiProvider(LLMProvider):
                         result.append({"role": "user", "parts": parts})
 
             elif msg.role == Role.ASSISTANT:
-                parts = []
+                parts: list[Any] = []
 
                 # Add content if present
                 if msg.content and isinstance(msg.content, str):
@@ -116,9 +116,9 @@ class GeminiProvider(LLMProvider):
 
     def _convert_tools(self, tools: list[Tool]) -> list[dict[str, Any]]:
         """Convert internal tools to Gemini function declarations."""
-        declarations = []
+        declarations: list[dict[str, Any]] = []
         for tool in tools:
-            declaration = {
+            declaration: dict[str, Any] = {
                 "name": tool.name,
                 "description": tool.description,
             }

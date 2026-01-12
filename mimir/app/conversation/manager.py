@@ -211,6 +211,8 @@ class ConversationManager:
         if new_mode:
             return self._mode_manager.set_mode(new_mode)
 
+        return None
+
     def clear_history(self) -> None:
         """Clear conversation history."""
         self._messages.clear()
