@@ -20,8 +20,13 @@ from .git.manager import GitConfig
 from .ha.api import HomeAssistantAPI
 from .ha.websocket import HomeAssistantWebSocket
 from .llm.factory import create_provider
+from .notifications import NotificationManager
 from .telegram.handler import TelegramHandler
+from .utils.mode_manager import ModeManager
+from .utils.mode_manager import OperatingMode as ModeEnum
 from .tools.ha_tools import (
+    AssignEntityAreaTool,
+    AssignEntityLabelsTool,
     CallServiceTool,
     CreateAutomationTool,
     CreateHelperTool,
@@ -31,18 +36,21 @@ from .tools.ha_tools import (
     DeleteHelperTool,
     DeleteSceneTool,
     DeleteScriptTool,
+    GetAreasTool,
     GetAutomationConfigTool,
     GetAutomationsTool,
     GetEntitiesTool,
     GetEntityStateTool,
     GetErrorLogTool,
     GetHelpersTool,
+    GetLabelsTool,
     GetLogbookTool,
     GetSceneConfigTool,
     GetScenesTool,
     GetScriptConfigTool,
     GetScriptsTool,
     GetServicesTool,
+    RenameEntityTool,
     UpdateAutomationTool,
     UpdateSceneTool,
     UpdateScriptTool,
@@ -64,7 +72,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.39"
+    VERSION = "0.1.40"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -86,6 +94,17 @@ class MimirAgent:
 
         # Git manager
         self._git: GitManager | None = None
+
+        # Mode manager
+        self._mode_manager = ModeManager(
+            yolo_duration_minutes=self._config.yolo_mode_duration_minutes,
+        )
+        # Set initial mode from config
+        initial_mode = ModeEnum(self._config.operating_mode.value)
+        self._mode_manager.set_mode(initial_mode)
+
+        # Notification manager
+        self._notification_manager: NotificationManager | None = None
 
         # Status tracking
         self._ha_connected = False
@@ -141,6 +160,13 @@ class MimirAgent:
         self._tool_registry.register(GetHelpersTool(self._ha_api))
         self._tool_registry.register(CreateHelperTool(self._ha_api))
         self._tool_registry.register(DeleteHelperTool(self._ha_api))
+
+        # Entity registry tools
+        self._tool_registry.register(RenameEntityTool(self._ha_api))
+        self._tool_registry.register(AssignEntityAreaTool(self._ha_api))
+        self._tool_registry.register(AssignEntityLabelsTool(self._ha_api))
+        self._tool_registry.register(GetAreasTool(self._ha_api))
+        self._tool_registry.register(GetLabelsTool(self._ha_api))
 
         logger.info("Registered %d tools", len(self._tool_registry))
 
@@ -318,11 +344,12 @@ class MimirAgent:
             await self._stop_web_server()
             return
 
-        # Initialize conversation manager with audit and memory
+        # Initialize conversation manager with audit, memory, and mode manager
         self._conversation_manager = ConversationManager(
             llm=self._llm,
             tool_registry=self._tool_registry,
             operating_mode=self._config.operating_mode,
+            mode_manager=self._mode_manager,
             audit_repository=self._audit,
             memory_repository=self._memory,
         )
@@ -334,7 +361,10 @@ class MimirAgent:
         # Set up tool execution callback for audit logging
         self._tool_registry.set_execution_callback(self._create_tool_execution_callback())
 
-        # Configure rate limiting
+        # Configure mode manager
+        self._tool_registry.set_mode_manager(self._mode_manager)
+
+        # Configure rate limiting (disabled in YOLO mode)
         self._tool_registry.configure_rate_limiter(
             deletions_per_hour=self._config.deletions_per_hour,
             modifications_per_hour=self._config.modifications_per_hour,
@@ -349,6 +379,26 @@ class MimirAgent:
         )
         self._telegram_handler.set_message_handler(self._handle_telegram_message)
 
+        # Initialize notification manager
+        self._notification_manager = NotificationManager(
+            ha_api=self._ha_api,
+            check_interval_minutes=30,
+            enabled=True,
+        )
+
+        # Set up notification callback to send via Telegram
+        async def send_notification(message: str) -> None:
+            if self._config.telegram_owner_id:
+                try:
+                    await self._ha_api.send_telegram_message(
+                        message,
+                        chat_id=self._config.telegram_owner_id,
+                    )
+                except Exception as e:
+                    logger.warning("Failed to send notification: %s", e)
+
+        self._notification_manager.set_notification_callback(send_notification)
+
         # Start WebSocket connection in background
         async def ws_wrapper() -> None:
             try:
@@ -361,6 +411,9 @@ class MimirAgent:
 
         ws_task = asyncio.create_task(ws_wrapper())
 
+        # Start notification manager
+        await self._notification_manager.start()
+
         logger.info("Mímir is ready and listening for messages")
 
         # Wait for shutdown
@@ -371,6 +424,11 @@ class MimirAgent:
         finally:
             # Cleanup
             logger.info("Shutting down Mímir...")
+
+            # Stop notification manager
+            if self._notification_manager:
+                await self._notification_manager.stop()
+
             await self._stop_web_server()
             await self._ha_ws.stop()
             await self._ha_api.close()

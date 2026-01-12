@@ -7,6 +7,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 from ..utils.logging import get_logger
+from ..utils.mode_manager import ModeManager, OperatingMode, is_write_operation
 from ..utils.rate_limiter import RateLimiter, get_operation_type
 
 if TYPE_CHECKING:
@@ -34,6 +35,12 @@ class RateLimitError(Exception):
     pass
 
 
+class ModeBlockedError(Exception):
+    """Raised when a tool is blocked by the current operating mode."""
+
+    pass
+
+
 class ToolRegistry:
     """Registry for managing available tools.
 
@@ -48,6 +55,7 @@ class ToolRegistry:
         self._on_execute: ExecutionCallback | None = None
         self._rate_limiter: RateLimiter | None = None
         self._rate_limiting_enabled: bool = True
+        self._mode_manager: ModeManager | None = None
 
     def set_execution_callback(self, callback: ExecutionCallback | None) -> None:
         """Set a callback to be called after each tool execution.
@@ -60,6 +68,20 @@ class ToolRegistry:
         self._on_execute = callback
         if callback:
             logger.debug("Tool execution callback registered")
+
+    def set_mode_manager(self, mode_manager: ModeManager) -> None:
+        """Set the mode manager for operating mode enforcement.
+
+        Args:
+            mode_manager: The mode manager instance.
+        """
+        self._mode_manager = mode_manager
+        logger.debug("Mode manager configured")
+
+    @property
+    def mode_manager(self) -> ModeManager | None:
+        """Get the mode manager."""
+        return self._mode_manager
 
     def configure_rate_limiter(
         self,
@@ -190,6 +212,13 @@ class ToolRegistry:
         """
         tool = self.get(name)
         logger.info("Executing tool: %s", name)
+
+        # Check operating mode before executing
+        if self._mode_manager:
+            allowed, message = self._mode_manager.check_tool_allowed(name)
+            if not allowed:
+                logger.warning("Tool %s blocked by operating mode: %s", name, message)
+                return f"Error: {message}"
 
         # Check rate limits before executing
         operation_type = get_operation_type(name)

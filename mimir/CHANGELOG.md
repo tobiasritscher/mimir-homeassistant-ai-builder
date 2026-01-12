@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.40] - 2025-01-12
+
+### Added
+
+- **Operating Mode Enforcement**: Modes now actually control behavior
+  - Chat Mode: Read-only, blocks all write operations
+  - Normal Mode: Confirmation required for destructive operations
+  - YOLO Mode: Auto-approve all with configurable timer
+  - Mode switching commands: "enable chat mode", "switch to normal mode", etc.
+  - Mode status queries: "what mode am I in?"
+  - System prompt includes mode-specific instructions
+
+- **Entity Registry Operations**: New tools for managing entities
+  - `rename_entity` - Change entity friendly name
+  - `assign_entity_area` - Assign entities to areas
+  - `assign_entity_labels` - Assign labels to entities
+  - `get_areas` - List all available areas
+  - `get_labels` - List all available labels
+
+- **Additional LLM Providers**: Support for more AI backends
+  - Google Gemini (gemini-1.5-pro, gemini-1.5-flash)
+  - Azure OpenAI (via custom base_url)
+  - Ollama (local models like llama3.2, mistral)
+  - vLLM (local OpenAI-compatible server)
+
+- **Proactive Notifications**: Automatic issue detection and alerts
+  - Monitors error log for critical issues
+  - Detects unavailable entities
+  - Sends notifications via Telegram
+  - Configurable check interval (default: 30 minutes)
+
+### Changed
+
+- Mode manager integrated into tool registry and conversation manager
+- System prompt now includes current operating mode with mode-specific instructions
+
 ## [0.1.39] - 2025-01-12
 
 ### Added

@@ -1730,3 +1730,286 @@ class DeleteHelperTool(BaseTool):
         except Exception as e:
             logger.exception("Failed to delete helper: %s", e)
             return f"Error deleting helper: {e}"
+
+
+# =============================================================================
+# Entity Registry Tools
+# =============================================================================
+
+
+class RenameEntityTool(BaseTool):
+    """Tool to rename an entity's friendly name."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "rename_entity"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Rename an entity by changing its friendly name in the entity registry. "
+            "This changes how the entity appears in the UI and voice assistants."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "entity_id": {
+                    "type": "string",
+                    "description": "The entity ID to rename (e.g., 'light.living_room').",
+                },
+                "new_name": {
+                    "type": "string",
+                    "description": "The new friendly name for the entity.",
+                },
+            },
+            "required": ["entity_id", "new_name"],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        entity_id = kwargs.get("entity_id", "")
+        new_name = kwargs.get("new_name", "")
+
+        if not entity_id or not new_name:
+            return "Error: entity_id and new_name are required."
+
+        try:
+            result = await self._ha_api.update_entity_registry(
+                entity_id=entity_id,
+                name=new_name,
+            )
+
+            return f"Entity '{entity_id}' renamed to '{new_name}' successfully."
+
+        except Exception as e:
+            logger.exception("Failed to rename entity: %s", e)
+            return f"Error renaming entity: {e}"
+
+
+class AssignEntityAreaTool(BaseTool):
+    """Tool to assign an entity to an area."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "assign_entity_area"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Assign an entity to an area in Home Assistant. "
+            "Areas help organize entities by room or location. "
+            "Use get_entities to see available areas first."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "entity_id": {
+                    "type": "string",
+                    "description": "The entity ID to assign (e.g., 'light.living_room').",
+                },
+                "area_id": {
+                    "type": "string",
+                    "description": "The area ID to assign to (e.g., 'living_room'). Use empty string to clear the area assignment.",
+                },
+            },
+            "required": ["entity_id", "area_id"],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        entity_id = kwargs.get("entity_id", "")
+        area_id = kwargs.get("area_id", "")
+
+        if not entity_id:
+            return "Error: entity_id is required."
+
+        try:
+            # If area_id is empty string, we clear the area
+            if area_id == "":
+                result = await self._ha_api.update_entity_registry(
+                    entity_id=entity_id,
+                    area_id="",  # This clears the area
+                )
+                return f"Entity '{entity_id}' removed from its area."
+            else:
+                result = await self._ha_api.update_entity_registry(
+                    entity_id=entity_id,
+                    area_id=area_id,
+                )
+                return f"Entity '{entity_id}' assigned to area '{area_id}' successfully."
+
+        except Exception as e:
+            logger.exception("Failed to assign entity area: %s", e)
+            return f"Error assigning entity area: {e}"
+
+
+class AssignEntityLabelsTool(BaseTool):
+    """Tool to assign labels to an entity."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "assign_entity_labels"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Assign labels to an entity in Home Assistant. "
+            "Labels are tags that help categorize and organize entities. "
+            "Provide the full list of labels (previous labels will be replaced)."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "entity_id": {
+                    "type": "string",
+                    "description": "The entity ID to assign labels to (e.g., 'light.living_room').",
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of label IDs to assign. Use empty array to clear all labels.",
+                },
+            },
+            "required": ["entity_id", "labels"],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        entity_id = kwargs.get("entity_id", "")
+        labels = kwargs.get("labels", [])
+
+        if not entity_id:
+            return "Error: entity_id is required."
+
+        if not isinstance(labels, list):
+            return "Error: labels must be a list of strings."
+
+        try:
+            result = await self._ha_api.update_entity_registry(
+                entity_id=entity_id,
+                labels=labels,
+            )
+
+            if labels:
+                return f"Entity '{entity_id}' assigned labels: {', '.join(labels)}"
+            else:
+                return f"Entity '{entity_id}' labels cleared."
+
+        except Exception as e:
+            logger.exception("Failed to assign entity labels: %s", e)
+            return f"Error assigning entity labels: {e}"
+
+
+class GetAreasTool(BaseTool):
+    """Tool to list all areas in Home Assistant."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "get_areas"
+
+    @property
+    def description(self) -> str:
+        return (
+            "List all areas defined in Home Assistant. "
+            "Use this to see available areas before assigning entities to them."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        try:
+            areas = await self._ha_api.get_areas()
+
+            if not areas:
+                return "No areas defined in Home Assistant."
+
+            results = []
+            for area in areas:
+                name = area.get("name", "Unknown")
+                area_id = area.get("area_id", "")
+                icon = area.get("icon", "")
+                icon_str = f" ({icon})" if icon else ""
+                results.append(f"- {name}{icon_str} [id: {area_id}]")
+
+            return f"Found {len(areas)} areas:\n" + "\n".join(results)
+
+        except Exception as e:
+            logger.exception("Failed to get areas: %s", e)
+            return f"Error getting areas: {e}"
+
+
+class GetLabelsTool(BaseTool):
+    """Tool to list all labels in Home Assistant."""
+
+    def __init__(self, ha_api: HomeAssistantAPI) -> None:
+        self._ha_api = ha_api
+
+    @property
+    def name(self) -> str:
+        return "get_labels"
+
+    @property
+    def description(self) -> str:
+        return (
+            "List all labels defined in Home Assistant. "
+            "Use this to see available labels before assigning them to entities."
+        )
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        }
+
+    async def execute(self, **kwargs: Any) -> str:
+        try:
+            labels = await self._ha_api.get_labels()
+
+            if not labels:
+                return "No labels defined in Home Assistant."
+
+            results = []
+            for label in labels:
+                name = label.get("name", "Unknown")
+                label_id = label.get("label_id", "")
+                color = label.get("color", "")
+                icon = label.get("icon", "")
+                extras = []
+                if color:
+                    extras.append(f"color: {color}")
+                if icon:
+                    extras.append(f"icon: {icon}")
+                extras_str = f" ({', '.join(extras)})" if extras else ""
+                results.append(f"- {name}{extras_str} [id: {label_id}]")
+
+            return f"Found {len(labels)} labels:\n" + "\n".join(results)
+
+        except Exception as e:
+            logger.exception("Failed to get labels: %s", e)
+            return f"Error getting labels: {e}"

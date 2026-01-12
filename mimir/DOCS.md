@@ -25,10 +25,10 @@ All configuration is done through the Home Assistant Add-on configuration page.
 |----------|--------|--------|
 | `anthropic` | Supported | claude-sonnet-4-20250514, claude-3-5-haiku-20241022 |
 | `openai` | Supported | gpt-4o, gpt-4-turbo, gpt-3.5-turbo |
-| `gemini` | Coming Soon | - |
-| `azure` | Coming Soon | - |
-| `ollama` | Coming Soon | - |
-| `vllm` | Coming Soon | - |
+| `gemini` | Supported | gemini-1.5-pro, gemini-1.5-flash |
+| `azure` | Supported | Azure OpenAI models (requires base_url) |
+| `ollama` | Supported | llama3.2, mistral, codellama, etc. |
+| `vllm` | Supported | Any model served by vLLM |
 
 ### LLM API Key
 
@@ -60,9 +60,15 @@ Your Telegram user ID. Mímir only responds to messages from this ID for securit
 
 | Mode | Description |
 |------|-------------|
-| `chat` | Read-only. Mímir can analyze and recommend but cannot make changes. |
-| `normal` | Default. Actions require appropriate confirmation. |
+| `chat` | Read-only. Mímir can analyze and recommend but cannot make changes. All write tools are blocked. |
+| `normal` | Default. Read operations auto-approved. Destructive operations require confirmation. |
 | `yolo` | All actions auto-approved for a limited duration. Use with caution! |
+
+**Mode Switching Commands:**
+- "enable chat mode" / "switch to chat mode"
+- "enable normal mode" / "switch to normal mode"
+- "enable yolo mode" / "switch to yolo mode"
+- "what mode am I in?" / "current mode"
 
 ### Rate Limits
 
@@ -175,6 +181,11 @@ The chat interface provides:
 | `get_entity_state` | Get detailed state of an entity |
 | `call_service` | Call a Home Assistant service |
 | `get_services` | List available services in a domain |
+| `rename_entity` | Change an entity's friendly name |
+| `assign_entity_area` | Assign an entity to an area |
+| `assign_entity_labels` | Assign labels to an entity |
+| `get_areas` | List all defined areas |
+| `get_labels` | List all defined labels |
 
 ### Automation Tools
 

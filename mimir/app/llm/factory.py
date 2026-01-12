@@ -55,23 +55,52 @@ def create_provider(config: LLMConfig) -> LLMProvider:
             )
 
         case LLMProviderEnum.GEMINI:
-            raise UnsupportedProviderError(
-                "Gemini provider is not yet implemented. Coming in Phase 6."
+            from .gemini import GeminiProvider
+
+            return GeminiProvider(
+                api_key=config.api_key.get_secret_value(),
+                model=config.model,
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
             )
 
         case LLMProviderEnum.AZURE:
-            raise UnsupportedProviderError(
-                "Azure provider is not yet implemented. Coming in Phase 6."
+            # Azure uses the OpenAI provider with a custom base URL
+            if not config.base_url:
+                raise UnsupportedProviderError(
+                    "Azure provider requires base_url to be set to your Azure OpenAI endpoint."
+                )
+            return OpenAIProvider(
+                api_key=config.api_key.get_secret_value(),
+                model=config.model,
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
+                base_url=config.base_url,
             )
 
         case LLMProviderEnum.OLLAMA:
-            raise UnsupportedProviderError(
-                "Ollama provider is not yet implemented. Coming in Phase 6."
+            from .local import OllamaProvider
+
+            # Default to localhost if no base_url provided
+            base_url = config.base_url or "http://localhost:11434/v1"
+            return OllamaProvider(
+                model=config.model,
+                base_url=base_url,
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
             )
 
         case LLMProviderEnum.VLLM:
-            raise UnsupportedProviderError(
-                "vLLM provider is not yet implemented. Coming in Phase 6."
+            from .local import VLLMProvider
+
+            # Default to localhost if no base_url provided
+            base_url = config.base_url or "http://localhost:8000/v1"
+            return VLLMProvider(
+                model=config.model,
+                base_url=base_url,
+                api_key=config.api_key.get_secret_value() if config.api_key else "EMPTY",
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
             )
 
         case _:

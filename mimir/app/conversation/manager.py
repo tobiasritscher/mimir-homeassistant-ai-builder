@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Any
 
 from ..llm.types import Message, ToolCall
 from ..utils.logging import get_logger
+from ..utils.mode_manager import ModeManager, OperatingMode
 
 if TYPE_CHECKING:
-    from ..config import OperatingMode
     from ..db.repository import AuditRepository, MemoryRepository
     from ..ha.types import UserContext
     from ..llm.base import LLMProvider
@@ -117,6 +117,7 @@ class ConversationManager:
         llm: LLMProvider,
         tool_registry: ToolRegistry,
         operating_mode: OperatingMode,
+        mode_manager: ModeManager | None = None,
         audit_repository: AuditRepository | None = None,
         memory_repository: MemoryRepository | None = None,
         max_history: int = 50,
@@ -127,7 +128,8 @@ class ConversationManager:
         Args:
             llm: The LLM provider to use.
             tool_registry: Registry of available tools.
-            operating_mode: Current operating mode.
+            operating_mode: Current operating mode (deprecated, use mode_manager).
+            mode_manager: Mode manager for operating mode enforcement.
             audit_repository: Optional repository for audit logging.
             memory_repository: Optional repository for long-term memory.
             max_history: Maximum number of messages to keep in history.
@@ -136,6 +138,7 @@ class ConversationManager:
         self._llm = llm
         self._tool_registry = tool_registry
         self._operating_mode = operating_mode
+        self._mode_manager = mode_manager
         self._audit = audit_repository
         self._memory = memory_repository
         self._max_history = max_history
@@ -170,13 +173,43 @@ class ConversationManager:
     @property
     def operating_mode(self) -> OperatingMode:
         """Get the current operating mode."""
+        if self._mode_manager:
+            return self._mode_manager.current_mode
         return self._operating_mode
 
     @operating_mode.setter
     def operating_mode(self, mode: OperatingMode) -> None:
         """Set the operating mode."""
         self._operating_mode = mode
+        if self._mode_manager:
+            self._mode_manager.set_mode(mode)
         logger.info("Operating mode changed to: %s", mode.value)
+
+    @property
+    def mode_manager(self) -> ModeManager | None:
+        """Get the mode manager."""
+        return self._mode_manager
+
+    def _check_mode_command(self, message: str) -> str | None:
+        """Check if message is a mode command and handle it.
+
+        Args:
+            message: User message to check.
+
+        Returns:
+            Response message if it was a mode command, None otherwise.
+        """
+        if not self._mode_manager:
+            return None
+
+        # Check for mode query
+        if self._mode_manager.is_mode_query(message):
+            return self._mode_manager.format_mode_response()
+
+        # Check for mode switch command
+        new_mode = self._mode_manager.parse_mode_command(message)
+        if new_mode:
+            return self._mode_manager.set_mode(new_mode)
 
     def clear_history(self) -> None:
         """Clear conversation history."""
@@ -250,6 +283,33 @@ class ConversationManager:
         """
         prompt = SYSTEM_PROMPT
 
+        # Add current operating mode status
+        if self._mode_manager:
+            mode = self._mode_manager.current_mode
+            prompt += "\n\n## Current Operating Mode\n"
+            prompt += f"You are currently in **{mode.value.upper()}** mode.\n"
+            if mode == OperatingMode.CHAT:
+                prompt += (
+                    "- You can ONLY read and analyze. You CANNOT make any changes.\n"
+                    "- If the user asks you to modify something, explain that you're in "
+                    "Chat mode and they need to switch to Normal or YOLO mode.\n"
+                    "- Say: 'I'm in Chat mode, so I can only analyze and recommend. "
+                    "Switch to Normal mode if you want me to make changes.'"
+                )
+            elif mode == OperatingMode.YOLO:
+                remaining = self._mode_manager.yolo_remaining_minutes
+                prompt += (
+                    f"- All actions are auto-approved. YOLO mode expires in {remaining:.1f} minutes.\n"
+                    "- Execute changes directly without asking for confirmation.\n"
+                    "- Be efficient but still explain what you're doing."
+                )
+            else:  # NORMAL
+                prompt += (
+                    "- Read operations are auto-approved.\n"
+                    "- For create/update operations, briefly explain what you'll do before executing.\n"
+                    "- For delete operations, ask for confirmation before executing."
+                )
+
         # Add user context if available
         if self._current_user:
             prompt += "\n\n## Current User\n"
@@ -320,10 +380,11 @@ class ConversationManager:
         """Process a user message and generate a response.
 
         This method:
-        1. Adds the user message to history
-        2. Sends to LLM with available tools
-        3. Executes any tool calls
-        4. Continues until LLM provides a final response
+        1. Checks for mode commands first
+        2. Adds the user message to history
+        3. Sends to LLM with available tools
+        4. Executes any tool calls
+        5. Continues until LLM provides a final response
 
         Args:
             user_message: The user's message.
@@ -337,6 +398,28 @@ class ConversationManager:
         if user_context:
             self._current_source = user_context.source
             self._current_user_id = user_context.user_id
+
+        # Check for mode commands first (before adding to history)
+        mode_response = self._check_mode_command(user_message)
+        if mode_response:
+            # Log the mode command and response
+            if self._audit:
+                try:
+                    await self._audit.log_message(
+                        source=self._current_source,
+                        message_type="user",
+                        content=user_message,
+                        user_id=self._current_user_id,
+                    )
+                    await self._audit.log_message(
+                        source=self._current_source,
+                        message_type="assistant",
+                        content=mode_response,
+                        user_id=self._current_user_id,
+                    )
+                except Exception as e:
+                    logger.warning("Failed to log mode command: %s", e)
+            return mode_response
 
         # Add user message to history
         self._messages.append(Message.user(user_message))

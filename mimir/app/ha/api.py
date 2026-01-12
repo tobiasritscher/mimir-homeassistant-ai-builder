@@ -474,6 +474,163 @@ class HomeAssistantAPI:
         result: dict[str, Any] = await self.delete(f"config/{helper_type}/config/{helper_id}")
         return result
 
+    # Entity Registry operations (via WebSocket)
+
+    async def _ws_command(self, command_type: str, **kwargs: Any) -> dict[str, Any] | None:
+        """Send a WebSocket command and get the result.
+
+        Entity registry operations require WebSocket, not REST API.
+
+        Args:
+            command_type: The command type.
+            **kwargs: Command parameters.
+
+        Returns:
+            The result, or None if failed.
+        """
+        import json
+
+        # Determine WebSocket URL based on REST URL
+        if "supervisor" in self._base_url:
+            ws_url = "ws://supervisor/core/websocket"
+        elif "homeassistant" in self._base_url:
+            ws_url = "ws://homeassistant:8123/api/websocket"
+        else:
+            # Convert http(s) REST URL to ws(s) WebSocket URL
+            ws_url = self._base_url.replace("/api", "/api/websocket")
+            ws_url = ws_url.replace("http://", "ws://").replace("https://", "wss://")
+
+        session = await self._ensure_session()
+
+        try:
+            async with session.ws_connect(ws_url) as ws:
+                # Wait for auth_required
+                msg = await ws.receive()
+                if msg.type != aiohttp.WSMsgType.TEXT:
+                    raise HomeAssistantAPIError(0, f"Unexpected message type: {msg.type}")
+
+                data = json.loads(msg.data)
+                if data.get("type") != "auth_required":
+                    raise HomeAssistantAPIError(0, f"Expected auth_required: {data}")
+
+                # Authenticate
+                await ws.send_json({"type": "auth", "access_token": self._token})
+
+                msg = await ws.receive()
+                data = json.loads(msg.data)
+                if data.get("type") != "auth_ok":
+                    raise HomeAssistantAPIError(401, "WebSocket authentication failed")
+
+                # Send command
+                command = {"id": 1, "type": command_type, **kwargs}
+                await ws.send_json(command)
+
+                # Wait for result
+                msg = await ws.receive()
+                data = json.loads(msg.data)
+
+                if data.get("success"):
+                    result: dict[str, Any] | None = data.get("result")
+                    return result
+                else:
+                    error = data.get("error", {})
+                    raise HomeAssistantAPIError(
+                        0, f"WebSocket command failed: {error.get('message', 'Unknown error')}"
+                    )
+
+        except aiohttp.ClientError as e:
+            raise HomeAssistantAPIError(0, f"WebSocket error: {e}") from e
+
+    async def get_entity_registry(self) -> list[dict[str, Any]]:
+        """Get all entities from the entity registry.
+
+        Returns:
+            List of entity registry entries.
+        """
+        result = await self._ws_command("config/entity_registry/list")
+        if result is None:
+            return []
+        return result if isinstance(result, list) else []
+
+    async def get_entity_registry_entry(self, entity_id: str) -> dict[str, Any] | None:
+        """Get a specific entity's registry entry.
+
+        Args:
+            entity_id: The entity ID.
+
+        Returns:
+            Entity registry entry, or None if not found.
+        """
+        result = await self._ws_command("config/entity_registry/get", entity_id=entity_id)
+        return result
+
+    async def update_entity_registry(
+        self,
+        entity_id: str,
+        name: str | None = None,
+        area_id: str | None = None,
+        labels: list[str] | None = None,
+        disabled_by: str | None = None,
+        hidden_by: str | None = None,
+        icon: str | None = None,
+    ) -> dict[str, Any]:
+        """Update an entity's registry entry.
+
+        Args:
+            entity_id: The entity ID.
+            name: New friendly name (None to leave unchanged).
+            area_id: Area to assign to (None to leave unchanged, "" to clear).
+            labels: Labels to assign (None to leave unchanged).
+            disabled_by: Set to "user" to disable, None to enable.
+            hidden_by: Set to "user" to hide, None to show.
+            icon: Custom icon (None to leave unchanged).
+
+        Returns:
+            Updated entity registry entry.
+        """
+        kwargs: dict[str, Any] = {"entity_id": entity_id}
+
+        if name is not None:
+            kwargs["name"] = name
+        if area_id is not None:
+            kwargs["area_id"] = area_id if area_id else None
+        if labels is not None:
+            kwargs["labels"] = labels
+        if disabled_by is not None:
+            kwargs["disabled_by"] = disabled_by
+        if hidden_by is not None:
+            kwargs["hidden_by"] = hidden_by
+        if icon is not None:
+            kwargs["icon"] = icon
+
+        logger.info("Updating entity registry: %s", entity_id)
+        result = await self._ws_command("config/entity_registry/update", **kwargs)
+        if result is None:
+            raise HomeAssistantAPIError(0, f"Failed to update entity: {entity_id}")
+        return result
+
+    async def get_areas(self) -> list[dict[str, Any]]:
+        """Get all areas.
+
+        Returns:
+            List of area registry entries.
+        """
+        result = await self._ws_command("config/area_registry/list")
+        if result is None:
+            return []
+        return result if isinstance(result, list) else []
+
+    async def get_labels(self) -> list[dict[str, Any]]:
+        """Get all labels.
+
+        Returns:
+            List of label registry entries.
+        """
+        result = await self._ws_command("config/label_registry/list")
+        if result is None:
+            return []
+        return result if isinstance(result, list) else []
+
     async def close(self) -> None:
         """Close the API session."""
         if self._session and not self._session.closed:
