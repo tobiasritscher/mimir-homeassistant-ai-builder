@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.44] - 2025-01-12
+
+### Fixed
+
+- Fix mypy variable redefinition error in gemini.py
+  - Renamed `parts` to `user_parts` and `assistant_parts` to avoid scope conflict
+
 ## [0.1.43] - 2025-01-12
 
 ### Fixed

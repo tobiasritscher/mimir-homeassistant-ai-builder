@@ -76,10 +76,10 @@ class GeminiProvider(LLMProvider):
                     result.append({"role": "user", "parts": [msg.content]})
                 else:
                     # Handle tool results
-                    parts = []
+                    user_parts: list[Any] = []
                     for block in msg.content:
                         if block.type == "tool_result" and block.tool_result:
-                            parts.append(
+                            user_parts.append(
                                 {
                                     "function_response": {
                                         "name": block.tool_result.tool_call_id,
@@ -87,20 +87,20 @@ class GeminiProvider(LLMProvider):
                                     }
                                 }
                             )
-                    if parts:
-                        result.append({"role": "user", "parts": parts})
+                    if user_parts:
+                        result.append({"role": "user", "parts": user_parts})
 
             elif msg.role == Role.ASSISTANT:
-                parts: list[Any] = []
+                assistant_parts: list[Any] = []
 
                 # Add content if present
                 if msg.content and isinstance(msg.content, str):
-                    parts.append(msg.content)
+                    assistant_parts.append(msg.content)
 
                 # Add tool calls if present
                 if msg.tool_calls:
                     for tc in msg.tool_calls:
-                        parts.append(
+                        assistant_parts.append(
                             {
                                 "function_call": {
                                     "name": tc.name,
@@ -109,8 +109,8 @@ class GeminiProvider(LLMProvider):
                             }
                         )
 
-                if parts:
-                    result.append({"role": "model", "parts": parts})
+                if assistant_parts:
+                    result.append({"role": "model", "parts": assistant_parts})
 
         return result, system
 
