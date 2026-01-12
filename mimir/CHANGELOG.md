@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.46] - 2025-01-12
+
+### Changed
+
+- Config options now use dropdown selects instead of free text
+  - `llm_provider`: anthropic, openai, gemini, azure, ollama, vllm
+  - `operating_mode`: chat, normal, yolo
+
 ## [0.1.45] - 2025-01-12
 
 ### Fixed

@@ -1,5 +1,5 @@
 name: Mimir
-version: "0.1.45"
+version: "0.1.46"
 slug: mimir
 description: Intelligent Home Assistant agent with Nordic wisdom
 url: https://github.com/tobiasritscher/mimir-homeassistant-ai-builder
@@ -43,12 +43,12 @@ options:
   git_author_email: mimir@asgard.local
   debug: false
 schema:
-  llm_provider: str
+  llm_provider: list(anthropic|openai|gemini|azure|ollama|vllm)
   llm_api_key: password
   llm_model: str?
   llm_base_url: str?
   telegram_owner_id: int
-  operating_mode: str?
+  operating_mode: list(chat|normal|yolo)?
   yolo_mode_duration_minutes: int?
   deletions_per_hour: int?
   modifications_per_hour: int?
