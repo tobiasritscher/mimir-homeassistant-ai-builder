@@ -623,8 +623,9 @@ class ConversationManager:
         Returns:
             A text summary of the conversation state.
         """
+        total_messages = sum(len(msgs) for msgs in self._user_messages.values())
         return (
-            f"Conversation has {len(self._messages)} messages. "
+            f"Conversation has {total_messages} messages across {len(self._user_messages)} users. "
             f"Operating mode: {self._operating_mode.value}. "
             f"Available tools: {', '.join(self._tool_registry.tool_names)}."
         )

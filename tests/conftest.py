@@ -224,9 +224,13 @@ class MockAuditRepository:
         offset: int = 0,  # noqa: ARG002
         source: str | None = None,  # noqa: ARG002
         message_type: str | None = None,  # noqa: ARG002
+        user_id: str | None = None,
     ) -> list[MockAuditLogEntry]:
-        """Return mock logs in DESC order (newest first)."""
-        return self._logs[:limit]
+        """Return mock logs in DESC order (newest first), optionally filtered by user_id."""
+        logs = self._logs
+        if user_id:
+            logs = [log for log in logs if log.user_id == user_id or log.user_id is None]
+        return logs[:limit]
 
     async def log_message(
         self,

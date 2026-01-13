@@ -96,10 +96,13 @@ class TestConversationManager:
 
         assert "Operating mode: normal" in summary
         assert "mock_tool" in summary
+        assert "messages" in summary
 
     @pytest.mark.asyncio
     async def test_load_history_from_audit(self) -> None:
         """Test loading conversation history from audit database."""
+        test_user_id = "test_user_123"
+
         # Create mock audit logs (newest first, like the real DB returns)
         mock_logs = [
             MockAuditLogEntry(
@@ -108,6 +111,7 @@ class TestConversationManager:
                 source="telegram",
                 message_type="assistant",
                 content="Der Schalter heißt switch.stecker_tv_station",
+                user_id=test_user_id,
             ),
             MockAuditLogEntry(
                 id=3,
@@ -115,6 +119,7 @@ class TestConversationManager:
                 source="telegram",
                 message_type="user",
                 content="Welcher Schalter steuert die Lautsprecher?",
+                user_id=test_user_id,
             ),
             MockAuditLogEntry(
                 id=2,
@@ -122,6 +127,7 @@ class TestConversationManager:
                 source="telegram",
                 message_type="assistant",
                 content="Hallo! Wie kann ich helfen?",
+                user_id=test_user_id,
             ),
             MockAuditLogEntry(
                 id=1,
@@ -129,6 +135,7 @@ class TestConversationManager:
                 source="telegram",
                 message_type="user",
                 content="Hallo Mimir",
+                user_id=test_user_id,
             ),
         ]
 
@@ -143,11 +150,11 @@ class TestConversationManager:
             audit_repository=audit,  # type: ignore[arg-type]
         )
 
-        # Load history
-        loaded = await manager.load_history_from_audit(limit=10)
+        # Load history for specific user
+        loaded = await manager.load_history_from_audit(user_id=test_user_id, limit=10)
 
         assert loaded == 4
-        history = manager.get_history()
+        history = manager.get_history(user_id=test_user_id)
         assert len(history) == 4
 
         # Check order is chronological (oldest first)
@@ -163,5 +170,5 @@ class TestConversationManager:
     @pytest.mark.asyncio
     async def test_load_history_without_audit(self, manager: ConversationManager) -> None:
         """Test that load_history returns 0 when no audit repository."""
-        loaded = await manager.load_history_from_audit()
+        loaded = await manager.load_history_from_audit(user_id="test_user")
         assert loaded == 0
