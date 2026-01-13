@@ -291,22 +291,30 @@ async def handle_chat_message(request: web.Request) -> web.Response:
 
 
 async def handle_chat_history(request: web.Request) -> web.Response:
-    """Handle GET /api/chat/history - Get conversation history."""
+    """Handle GET /api/chat/history - Get conversation history for current user."""
     agent = request.app.get("agent")
 
     if not agent or not agent._conversation_manager:
         return web.json_response({"history": []})
 
-    history = agent._conversation_manager.get_history()
+    # Get user context to filter history by user
+    user_context = get_user_context(request)
+
+    # Load history from audit if not already in memory
+    await agent._conversation_manager.load_history_from_audit(user_id=user_context.user_id)
+
+    history = agent._conversation_manager.get_history(user_id=user_context.user_id)
     return web.json_response({"history": history})
 
 
 async def handle_chat_clear(request: web.Request) -> web.Response:
-    """Handle POST /api/chat/clear - Clear conversation history."""
+    """Handle POST /api/chat/clear - Clear conversation history for current user."""
     agent = request.app.get("agent")
 
     if agent and agent._conversation_manager:
-        agent._conversation_manager.clear_history()
+        # Get user context to clear only this user's history
+        user_context = get_user_context(request)
+        agent._conversation_manager.clear_history(user_id=user_context.user_id)
 
     return web.json_response({"status": "ok"})
 

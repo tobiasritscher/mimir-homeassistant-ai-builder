@@ -72,7 +72,7 @@ logger = get_logger(__name__)
 class MimirAgent:
     """The main Mímir agent application."""
 
-    VERSION = "0.1.46"
+    VERSION = "0.1.47"
 
     def __init__(self) -> None:
         """Initialize the Mímir agent."""
@@ -356,9 +356,7 @@ class MimirAgent:
             memory_repository=self._memory,
         )
 
-        # Load conversation history and memories from previous sessions
-        await self._conversation_manager.load_history_from_audit()
-        await self._conversation_manager.refresh_memory_summary()
+        # Note: History and memories are now loaded per-user lazily when they first chat
 
         # Set up tool execution callback for audit logging
         self._tool_registry.set_execution_callback(self._create_tool_execution_callback())

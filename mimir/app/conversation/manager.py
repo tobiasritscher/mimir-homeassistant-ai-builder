@@ -143,7 +143,9 @@ class ConversationManager:
         self._memory = memory_repository
         self._max_history = max_history
         self._max_tool_iterations = max_tool_iterations
-        self._messages: list[Message] = []
+
+        # Per-user message history (keyed by user_id)
+        self._user_messages: dict[str, list[Message]] = {}
 
         # Current message context for audit logging
         self._current_source: str = "unknown"
@@ -153,8 +155,8 @@ class ConversationManager:
         # Current user context (set per message)
         self._current_user: UserContext | None = None
 
-        # Cached memory summary (refreshed periodically)
-        self._memory_summary: str = ""
+        # Per-user cached memory summary (keyed by user_id)
+        self._user_memory_summary: dict[str, str] = {}
 
     def set_message_context(
         self,
@@ -213,18 +215,41 @@ class ConversationManager:
 
         return None
 
-    def clear_history(self) -> None:
-        """Clear conversation history."""
-        self._messages.clear()
-        logger.debug("Conversation history cleared")
-
-    async def load_history_from_audit(self, limit: int = 20) -> int:
-        """Load conversation history from the audit database.
-
-        This restores context after a restart by loading recent messages
-        from the audit log.
+    def _get_user_messages(self, user_id: str) -> list[Message]:
+        """Get message list for a user, creating if needed.
 
         Args:
+            user_id: The user ID.
+
+        Returns:
+            List of messages for the user.
+        """
+        if user_id not in self._user_messages:
+            self._user_messages[user_id] = []
+        return self._user_messages[user_id]
+
+    def clear_history(self, user_id: str | None = None) -> None:
+        """Clear conversation history.
+
+        Args:
+            user_id: Optional user ID to clear history for. If None, clears all.
+        """
+        if user_id:
+            if user_id in self._user_messages:
+                self._user_messages[user_id].clear()
+                logger.debug("Conversation history cleared for user %s", user_id)
+        else:
+            self._user_messages.clear()
+            logger.debug("All conversation history cleared")
+
+    async def load_history_from_audit(self, user_id: str, limit: int = 20) -> int:
+        """Load conversation history from the audit database for a specific user.
+
+        This restores context by loading recent messages from the audit log
+        for a specific user.
+
+        Args:
+            user_id: The user ID to load history for.
             limit: Maximum number of messages to load.
 
         Returns:
@@ -234,9 +259,15 @@ class ConversationManager:
             logger.debug("No audit repository, skipping history load")
             return 0
 
+        # Skip if already loaded for this user
+        existing = self._user_messages.get(user_id)
+        if existing:
+            logger.debug("History already loaded for user %s", user_id)
+            return len(existing)
+
         try:
-            # Get recent user and assistant messages
-            logs = await self._audit.get_recent_logs(limit=limit * 2)
+            # Get recent user and assistant messages for this specific user
+            logs = await self._audit.get_recent_logs(limit=limit * 2, user_id=user_id)
 
             # Filter to user/assistant messages and reverse to chronological order
             messages_to_load = []
@@ -250,32 +281,46 @@ class ConversationManager:
             if len(messages_to_load) > limit:
                 messages_to_load = messages_to_load[-limit:]
 
-            self._messages = messages_to_load
-            logger.info("Loaded %d messages from audit history", len(self._messages))
-            return len(self._messages)
+            self._user_messages[user_id] = messages_to_load
+            logger.info(
+                "Loaded %d messages from audit history for user %s",
+                len(messages_to_load),
+                user_id,
+            )
+            return len(messages_to_load)
 
         except Exception as e:
-            logger.warning("Failed to load history from audit: %s", e)
+            logger.warning("Failed to load history from audit for user %s: %s", user_id, e)
             return 0
 
-    def _trim_history(self) -> None:
-        """Trim history to max_history messages."""
-        if len(self._messages) > self._max_history:
-            # Keep the most recent messages
-            self._messages = self._messages[-self._max_history :]
-            logger.debug("History trimmed to %d messages", len(self._messages))
+    def _trim_history(self, user_id: str) -> None:
+        """Trim history to max_history messages for a user.
 
-    async def refresh_memory_summary(self) -> None:
-        """Refresh the cached memory summary from the database."""
+        Args:
+            user_id: The user ID to trim history for.
+        """
+        messages = self._get_user_messages(user_id)
+        if len(messages) > self._max_history:
+            # Keep the most recent messages
+            self._user_messages[user_id] = messages[-self._max_history :]
+            logger.debug("History trimmed to %d messages for user %s", self._max_history, user_id)
+
+    async def refresh_memory_summary(self, user_id: str) -> None:
+        """Refresh the cached memory summary from the database for a user.
+
+        Args:
+            user_id: The user ID to load memory summary for.
+        """
         if not self._memory:
             return
 
         try:
-            self._memory_summary = await self._memory.get_memory_summary()
-            if self._memory_summary:
-                logger.debug("Loaded memory summary (%d chars)", len(self._memory_summary))
+            summary = await self._memory.get_memory_summary(user_id=user_id)
+            self._user_memory_summary[user_id] = summary
+            if summary:
+                logger.debug("Loaded memory summary for user %s (%d chars)", user_id, len(summary))
         except Exception as e:
-            logger.warning("Failed to load memory summary: %s", e)
+            logger.warning("Failed to load memory summary for user %s: %s", user_id, e)
 
     def _build_system_prompt(self) -> str:
         """Build the full system prompt including user context and memories.
@@ -324,9 +369,11 @@ class ConversationManager:
                 "from the facts below."
             )
 
-        # Add memory summary if available
-        if self._memory_summary:
-            prompt += f"\n\n{self._memory_summary}"
+        # Add memory summary if available for this user
+        if self._current_user:
+            memory_summary = self._user_memory_summary.get(self._current_user.user_id, "")
+            if memory_summary:
+                prompt += f"\n\n{memory_summary}"
 
         return prompt
 
@@ -401,6 +448,15 @@ class ConversationManager:
             self._current_source = user_context.source
             self._current_user_id = user_context.user_id
 
+        # Use a default user_id if none provided
+        user_id = self._current_user_id or "anonymous"
+
+        # Load history from audit for this user if not already loaded
+        await self.load_history_from_audit(user_id=user_id)
+
+        # Get this user's message list
+        messages = self._get_user_messages(user_id)
+
         # Check for mode commands first (before adding to history)
         mode_response = self._check_mode_command(user_message)
         if mode_response:
@@ -424,10 +480,10 @@ class ConversationManager:
             return mode_response
 
         # Add user message to history
-        self._messages.append(Message.user(user_message))
-        self._trim_history()
+        messages.append(Message.user(user_message))
+        self._trim_history(user_id)
 
-        logger.info("Processing message: %s...", user_message[:50])
+        logger.info("Processing message from user %s: %s...", user_id, user_message[:50])
 
         # Log user message to audit
         if self._audit:
@@ -444,8 +500,8 @@ class ConversationManager:
         # Get available tools
         tools = self._tool_registry.get_llm_tools()
 
-        # Refresh memory summary (includes any new memories from this session)
-        await self.refresh_memory_summary()
+        # Refresh memory summary for this user
+        await self.refresh_memory_summary(user_id)
 
         # Build system prompt with memories
         system_prompt = self._build_system_prompt()
@@ -457,7 +513,7 @@ class ConversationManager:
 
             # Get LLM response
             response = await self._llm.complete(
-                messages=self._messages,
+                messages=messages,
                 tools=tools if tools else None,
                 system=system_prompt,
             )
@@ -471,7 +527,7 @@ class ConversationManager:
             # Handle tool calls
             if response.has_tool_calls and response.tool_calls:
                 # Add assistant message with tool calls
-                self._messages.append(
+                messages.append(
                     Message.assistant(
                         content=response.content,
                         tool_calls=response.tool_calls,
@@ -480,14 +536,14 @@ class ConversationManager:
 
                 # Execute tools and add results
                 tool_results = await self._execute_tool_calls(response.tool_calls)
-                self._messages.extend(tool_results)
+                messages.extend(tool_results)
 
                 # Continue loop to get next response
                 continue
 
             # No tool calls - we have a final response
             if response.content:
-                self._messages.append(Message.assistant(content=response.content))
+                messages.append(Message.assistant(content=response.content))
                 await self._log_assistant_response(response.content)
                 return response.content
 
@@ -525,14 +581,21 @@ class ConversationManager:
         except Exception as e:
             logger.warning("Failed to log assistant response: %s", e)
 
-    def get_history(self) -> list[dict[str, Any]]:
+    def get_history(self, user_id: str | None = None) -> list[dict[str, Any]]:
         """Get conversation history in a serializable format.
+
+        Args:
+            user_id: User ID to get history for. If None, returns empty list.
 
         Returns:
             List of message dictionaries with 'role' and 'content'.
         """
+        if not user_id:
+            return []
+
+        messages = self._user_messages.get(user_id, [])
         history = []
-        for msg in self._messages:
+        for msg in messages:
             # Skip tool results - they're internal
             if msg.role.value == "user" or (msg.role.value == "assistant" and not msg.tool_calls):
                 content = ""

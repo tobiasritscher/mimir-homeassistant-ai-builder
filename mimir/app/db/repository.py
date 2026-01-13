@@ -219,6 +219,7 @@ class AuditRepository:
         offset: int = 0,
         source: str | None = None,
         message_type: str | None = None,
+        user_id: str | None = None,
     ) -> list[AuditLogEntry]:
         """Get recent audit logs.
 
@@ -227,6 +228,7 @@ class AuditRepository:
             offset: Number of entries to skip.
             source: Optional filter by source.
             message_type: Optional filter by message type.
+            user_id: Optional filter by user ID (for per-user history).
 
         Returns:
             List of audit log entries.
@@ -241,6 +243,10 @@ class AuditRepository:
         if message_type:
             conditions.append("message_type = ?")
             params.append(message_type)
+
+        if user_id:
+            conditions.append("user_id = ?")
+            params.append(user_id)
 
         where_clause = ""
         if conditions:
@@ -526,13 +532,24 @@ class MemoryRepository:
         logger.info("Added memory: id=%d, category=%s", memory_id, category)
         return memory_id
 
-    async def get_all_memories(self) -> list[MemoryEntry]:
-        """Get all memories.
+    async def get_all_memories(self, user_id: str | None = None) -> list[MemoryEntry]:
+        """Get all memories, optionally filtered by user.
+
+        Args:
+            user_id: Optional user ID to filter memories for.
 
         Returns:
-            List of all memory entries.
+            List of memory entries.
         """
-        rows = await self._db.fetch_all("SELECT * FROM memories ORDER BY category, created_at DESC")
+        if user_id:
+            rows = await self._db.fetch_all(
+                "SELECT * FROM memories WHERE user_id = ? OR user_id IS NULL ORDER BY category, created_at DESC",
+                (user_id,),
+            )
+        else:
+            rows = await self._db.fetch_all(
+                "SELECT * FROM memories ORDER BY category, created_at DESC"
+            )
         return [MemoryEntry.from_row(row) for row in rows]
 
     async def get_memories_by_category(self, category: str) -> list[MemoryEntry]:
@@ -607,13 +624,16 @@ class MemoryRepository:
         await self._db.commit()
         return cursor.rowcount > 0
 
-    async def get_memory_summary(self) -> str:
-        """Get a formatted summary of all memories for the system prompt.
+    async def get_memory_summary(self, user_id: str | None = None) -> str:
+        """Get a formatted summary of memories for the system prompt.
+
+        Args:
+            user_id: Optional user ID to filter memories for.
 
         Returns:
             Formatted string of memories grouped by category.
         """
-        memories = await self.get_all_memories()
+        memories = await self.get_all_memories(user_id=user_id)
 
         if not memories:
             return ""

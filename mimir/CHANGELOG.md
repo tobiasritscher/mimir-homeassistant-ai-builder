@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.47] - 2025-01-13
+
+### Fixed
+
+- Fix multi-user session isolation - users now have separate conversation histories
+  - Each user's messages are stored separately (keyed by user_id from HA ingress headers)
+  - History is loaded lazily per-user from audit database
+  - Memories are filtered by user_id (plus shared memories)
+  - Clear history now only clears current user's history
+  - Fixes issue where all users saw the same conversation and wrong names
+
 ## [0.1.46] - 2025-01-12
 
 ### Changed
